@@ -7,109 +7,131 @@ queue_msg_holder = []
 
 
 async def embed_for_queue(bot):
+    await bot.wait_until_ready()
     await asyncio.sleep(2)
     while True:
-        embeds = list(chunks(bot.MusicPlayer.queue, 23))
-        if not embeds:
-            embed = discord.Embed(title="Song Queue is empty :sob:",
-                                  description="type !play `[song name|url]` or !request `[song name|url]` to add song to the queue",
-                                  colour=discord.Colour(0x3f8517))
-            if len(queue_msg_holder) == 0:
-                msg = await bot.MusicPlayer.queue_channel.send(embed=embed)
-                queue_msg_holder.append(msg)
-            elif len(queue_msg_holder) > 0:
-                await queue_msg_holder[0].edit(embed=embed)
+        try:
+            embeds = list(chunks(bot.MusicPlayer.queue, 23))
+            if not embeds:
+                embed = discord.Embed(title="Song Queue is empty :sob:",
+                                      description="type !play `[song name|url]` or !request `[song name|url]` to add song to the queue",
+                                      colour=discord.Colour(0x3f8517))
+                if len(queue_msg_holder) == 0:
+                    msg = await bot.MusicPlayer.player_channel.send(embed=embed)
+                    queue_msg_holder.append(msg)
+                elif len(queue_msg_holder) > 0:
+                    await queue_msg_holder[0].edit(embed=embed)
+
+                await asyncio.sleep(5)
+                continue
+
+            songs = 1
+            for i, embed_ in enumerate(embeds):
+                if len(embeds) > 1:
+                    embed = discord.Embed(
+                        description=":arrow_double_down: :musical_note: :notes: :arrow_double_down:",
+                        title=f"Song Queue {i+1}/{len(embeds)+1}",
+                        colour=discord.Colour(0x3f8517))
+                else:
+                    embed = discord.Embed(
+                        description=":arrow_double_down: :musical_note: :notes: :arrow_double_down:",
+                        title=f"Song Queue",
+                        colour=discord.Colour(0x3f8517))
+
+                for song in embed_:
+                    text = "`{}.`[{} by {}]({}) | `{} Requested by: {}`".format(
+                        songs, song.song_name, song.song_uploader,
+                        song.song_webpage_url.replace("www.youtube.com/watch?v=", "youtu.be/"),
+                        format_time(song.song_duration), song.requester.name
+                    )
+                    embed.add_field(name="\u200b", value=text)
+                    songs += 1
+
+                if len(queue_msg_holder) == i:
+                    msg = await bot.MusicPlayer.player_channel.send(embed=embed)
+                    queue_msg_holder.append(msg)
+                elif len(queue_msg_holder) > i:
+                    await queue_msg_holder[i].edit(embed=embed)
+
+            for msg in queue_msg_holder[len(embeds):]:
+                await msg.delete()
+                queue_msg_holder.remove(msg)
 
             await asyncio.sleep(5)
-            continue
-
-        songs = 1
-        for i, embed_ in enumerate(embeds):
-            if len(embeds) > 1:
-                embed = discord.Embed(
-                    description=":arrow_double_down: :musical_note: :notes: :arrow_double_down:",
-                    title=f"Song Queue {i+1}/{len(embeds)+1}",
-                    colour=discord.Colour(0x3f8517))
-            else:
-                embed = discord.Embed(
-                    description=":arrow_double_down: :musical_note: :notes: :arrow_double_down:",
-                    title=f"Song Queue",
-                    colour=discord.Colour(0x3f8517))
-
-            for song in embed_:
-                text = "`{}.`[{} by {}]({}) | `{} Requested by: {}`".format(
-                    songs, song.song_name, song.song_uploader, song.song_webpage_url.replace("www.youtube.com/watch?v=", "youtu.be/"),
-                    format_time(song.song_duration), song.requester.name
-                )
-                embed.add_field(name="\u200b", value=text)
-                songs += 1
-
-            if len(queue_msg_holder) == i:
-                msg = await bot.MusicPlayer.queue_channel.send(embed=embed)
-                queue_msg_holder.append(msg)
-            elif len(queue_msg_holder) > i:
-                await queue_msg_holder[i].edit(embed=embed)
-
-        for msg in queue_msg_holder[len(embeds):]:
-            await msg.delete()
-            queue_msg_holder.remove(msg)
-
-        await asyncio.sleep(5)
+        except Exception as e:
+            print(e)
+            await asyncio.sleep(2)
 
 
 async def embed_for_nowplaying(bot):
+    await bot.wait_until_ready()
     await asyncio.sleep(1)
     while True:
-        player = bot.MusicPlayer
-        if player.current:
-            embed = discord.Embed(title=f"Now Playing",
-                                  description=f"[{player.current.song_name}]({player.current.song_webpage_url})",
-                                  colour=discord.Colour(0x3f8517))
+        try:
+            player = bot.MusicPlayer
+            if player.current and player.is_playing():
+                embed = discord.Embed(title=f"Now Playing",
+                                      description=f"[{player.current.song_name}]({player.current.song_webpage_url})",
+                                      colour=discord.Colour(0x3f8517))
 
-            if player.current.song_thumbnail:
-                embed.set_image(url=f"{player.current.song_thumbnail}")
+                if player.current.song_thumbnail:
+                    embed.set_image(url=f"{player.current.song_thumbnail}")
 
-            if not player.current.song_duration:
-                embed.add_field(name=f"`{progress_bar(1, 1)}`",
-                                value=":red_circle: Live Stream",
-                                inline=False)
-            elif hasattr(player.current, 'progress'):
-                embed.add_field(name=f"`{progress_bar(player.current.progress, player.current.song_duration)}`",
-                                value=f"`{format_time(player.current.progress)}/{format_time(player.current.song_duration)}`",
-                                inline=False)
+                if not player.current.song_duration:
+                    embed.add_field(name=f"`{progress_bar(1, 1)}`",
+                                    value=":red_circle: Live Stream",
+                                    inline=False)
+                elif hasattr(player.current, 'progress'):
+                    embed.add_field(name=f"`{progress_bar(player.current.progress, player.current.song_duration)}`",
+                                    value=f"`{format_time(player.current.progress)}/{format_time(player.current.song_duration)}`",
+                                    inline=False)
+                else:
+                    embed.add_field(
+                        name=f"`{progress_bar(player.current.song_duration, player.current.song_duration)}`",
+                        value=f"`{format_time(player.current.song_duration)}/{format_time(player.current.song_duration)}`",
+                        inline=False)
+
+                embed.add_field(name="By", value=f"`{player.current.song_uploader}`".title(), inline=True)
+                embed.add_field(name="Source", value=f"`{player.current.song_extractor}`".title(), inline=True)
+                embed.add_field(name="Requested by", value=f"`{player.current.requester}`".title(), inline=True)
+                embed.add_field(name="Volume", value=f"`{round(player.volume*100)}`", inline=True)
+
             else:
-                embed.add_field(name=f"`{progress_bar(player.current.song_duration, player.current.song_duration)}`",
-                                value=f"`{format_time(player.current.song_duration)}/{format_time(player.current.song_duration)}`",
-                                inline=False)
+                await bot.change_presence(status=discord.Status.idle, activity=None)
+                embed = discord.Embed(title="Nothing to Play :disappointed_relieved:",
+                                      description="type !play `[song name|url]` or !request `[song name|url]` to play a song",
+                                      colour=discord.Colour(0x3f8517))
 
-            embed.add_field(name="By", value=f"`{player.current.song_uploader}`".title(), inline=True)
-            embed.add_field(name="Source", value=f"`{player.current.song_extractor}`".title(), inline=True)
-            embed.add_field(name="Requested by", value=f"`{player.current.requester}`".title(), inline=True)
-            embed.add_field(name="Volume", value=f"`{round(player.volume*100)}`", inline=True)
+            if bot.now_playing_msg is None:
+                bot.now_playing_msg = await bot.MusicPlayer.player_channel.send(embed=embed)
+            else:
+                await bot.now_playing_msg.edit(embed=embed)
 
-        else:
-            embed = discord.Embed(title="Nothing to Play :disappointed_relieved:",
-                                  description="type !play `[song name|url]` or !request `[song name|url]` to play a song",
-                                  colour=discord.Colour(0x3f8517))
+            if player.is_playing() and player.current.song_duration:
+                await asyncio.sleep(player.current.song_duration / 35)
+            else:
+                while not bot.MusicPlayer.current and not hasattr(bot.MusicPlayer.current, 'song_duration'):
+                    await asyncio.sleep(0.5)
 
-        if bot.now_playing_msg is None:
-            bot.now_playing_msg = await bot.MusicPlayer.now_playing_channel.send(embed=embed)
-
-        else:
-            await bot.now_playing_msg.edit(embed=embed)
-        if player.current and player.current.song_duration:
-            await asyncio.sleep(player.current.song_duration/35)
-        else:
-            while not bot.MusicPlayer.current and not hasattr(bot.MusicPlayer.current, 'song_duration'):
-                await asyncio.sleep(0.5)
+        except Exception as e:
+            print(e)
+            await asyncio.sleep(2)
 
 
 async def chat_cleaner(bot):
+    await bot.wait_until_ready()
+    await asyncio.sleep(1)
+    async for message in bot.get_channel(player_channel).history(limit=None):
+        await message.delete()
+    async for message in bot.get_channel(song_request_queue_channel).history(limit=None):
+        await message.delete()
+
     while True:
-        # async for message in bot.get_channel(now_playing_channel).history(limit=None):
-        #     if message.author != bot.user:
-        #         await message.delete()
         async for message in bot.get_channel(player_channel).history(limit=None):
+            if message.author != bot.user:
+                await message.delete()
+
+        async for message in bot.get_channel(song_request_queue_channel).history(limit=None):
             if message.author != bot.user:
                 await message.delete()
 
