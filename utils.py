@@ -104,7 +104,7 @@ async def chat_cleaner(bot):
         # async for message in bot.get_channel(now_playing_channel).history(limit=None):
         #     if message.author != bot.user:
         #         await message.delete()
-        async for message in bot.get_channel(queue_channel).history(limit=None):
+        async for message in bot.get_channel(player_channel).history(limit=None):
             if message.author != bot.user:
                 await message.delete()
 

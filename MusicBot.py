@@ -30,9 +30,9 @@ class MusicBot(discord.Client):
         print(bot.user.id)
         print('------')
         await self.auto_join()
-        async for message in self.get_channel(now_playing_channel).history(limit=None):
+        async for message in self.get_channel(player_channel).history(limit=None):
             await message.delete()
-        async for message in self.get_channel(queue_channel).history(limit=None):
+        async for message in self.get_channel(player_channel).history(limit=None):
             await message.delete()
         self.loop.create_task(embed_for_queue(self))
         self.loop.create_task(embed_for_nowplaying(self))
@@ -42,16 +42,16 @@ class MusicBot(discord.Client):
         self.voice_client = self.get_voice_client(channel_id)
         self.MusicPlayer = MusicPlayer(self)
         self.MusicPlayer.bot_cmd_channel = self.get_channel(bot_cmd_channel)
-        self.MusicPlayer.now_playing_channel = self.get_channel(now_playing_channel)
-        self.MusicPlayer.queue_channel = self.get_channel(queue_channel)
+        self.MusicPlayer.now_playing_channel = self.get_channel(player_channel)
+        self.MusicPlayer.queue_channel = self.get_channel(player_channel)
 
     async def auto_join(self):
         await self.wait_until_ready()
-        self.voice_client = await self.get_voice_client(self.get_channel(music_channel))
+        self.voice_client = await self.get_voice_client(self.get_channel(bot_voice_channel))
         self.MusicPlayer = MusicPlayer(self)
         self.MusicPlayer.bot_cmd_channel = self.get_channel(bot_cmd_channel)
-        self.MusicPlayer.queue_channel = self.get_channel(queue_channel)
-        self.MusicPlayer.now_playing_channel = self.get_channel(now_playing_channel)
+        self.MusicPlayer.queue_channel = self.get_channel(player_channel)
+        self.MusicPlayer.now_playing_channel = self.get_channel(player_channel)
 
     async def on_message(self, message):
         await self.wait_until_ready()
