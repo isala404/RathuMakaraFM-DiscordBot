@@ -142,7 +142,7 @@ class Song(discord.PCMVolumeTransformer):
         return cls(discord.FFmpegPCMAudio(ytdl.prepare_filename(data), **ffmpeg_options), data=data)
 
     def update_metadata(self, data):
-
+        print(data['title'])
         if 'title' in data.keys() and data['uploader']:
             self.song_name, self.song_uploader = extract_song_artist_title(data['title'], data['uploader'])
 
