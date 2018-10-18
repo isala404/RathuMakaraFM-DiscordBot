@@ -66,9 +66,14 @@ async def embed_for_nowplaying(bot):
                                   description=f"[{player.current.song_name}]({player.current.song_webpage_url})",
                                   colour=discord.Colour(0x3f8517))
 
-            embed.set_image(url=f"{player.current.song_thumbnail}")
+            if player.current.song_thumbnail:
+                embed.set_image(url=f"{player.current.song_thumbnail}")
 
-            if hasattr(player.current, 'progress'):
+            if not player.current.song_duration:
+                embed.add_field(name=f"`{progress_bar(1, 1)}`",
+                                value=":red_circle: Live Stream",
+                                inline=False)
+            elif hasattr(player.current, 'progress'):
                 embed.add_field(name=f"`{progress_bar(player.current.progress, player.current.song_duration)}`",
                                 value=f"`{format_time(player.current.progress)}/{format_time(player.current.song_duration)}`",
                                 inline=False)
@@ -92,10 +97,10 @@ async def embed_for_nowplaying(bot):
 
         else:
             await bot.now_playing_msg.edit(embed=embed)
-        if player.current:
+        if player.current and player.current.song_duration:
             await asyncio.sleep(player.current.song_duration/35)
         else:
-            while not bot.MusicPlayer.current:
+            while not bot.MusicPlayer.current and not hasattr(bot.MusicPlayer.current, 'song_duration'):
                 await asyncio.sleep(0.5)
 
 
@@ -114,27 +119,6 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         # Create an index range for l of n items:
         yield l[i:i + n]
-
-
-def sample():
-    embed = discord.Embed(title="title ~~(did you know you can have markdown here too?)~~",
-                          colour=discord.Colour(0x3f8517), url="https://discordapp.com",
-                          description="this supports [named links](https://discordapp.com) on top of the previously shown subset of markdown. ```\nyes, even code blocks```",
-                          timestamp=datetime.datetime.utcfromtimestamp(1539693869))
-
-    embed.set_image(url="https://cdn.discordapp.com/embed/avatars/0.png")
-    embed.set_thumbnail(url="https://cdn.discordapp.com/embed/avatars/0.png")
-    embed.set_author(name="author name", url="https://discordapp.com",
-                     icon_url="https://cdn.discordapp.com/embed/avatars/0.png")
-    embed.set_footer(text="footer text", icon_url="https://cdn.discordapp.com/embed/avatars/0.png")
-
-    embed.add_field(name="🤔", value="some of these properties have certain limits...")
-    embed.add_field(name="😱", value="try exceeding some of them!")
-    embed.add_field(name="🙄",
-                    value="an informative error should show up, and this view will remain as-is until all issues are fixed")
-    embed.add_field(name="<:thonkang:219069250692841473>", value="these last two", inline=True)
-    embed.add_field(name="<:thonkang:219069250692841473>", value="are inline fields", inline=True)
-    return embed
 
 
 def format_time(seconds):
