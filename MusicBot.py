@@ -19,9 +19,6 @@ class MusicBot(discord.Client):
         if not isinstance(channel, discord.VoiceChannel):
             raise AttributeError('Channel passed must be a voice channel')
 
-        # if channel.guild.voice_client:
-        #     return channel.guild.voice_client
-        # else:
         return await channel.connect(timeout=60, reconnect=True)
 
     async def on_ready(self):
@@ -29,35 +26,50 @@ class MusicBot(discord.Client):
         print(bot.user.name)
         print(bot.user.id)
         print('------')
+
+    async def on_connect(self):
         await self.auto_join()
-        async for message in self.get_channel(player_channel).history(limit=None):
-            await message.delete()
-        async for message in self.get_channel(player_channel).history(limit=None):
-            await message.delete()
-        self.loop.create_task(embed_for_queue(self))
-        self.loop.create_task(embed_for_nowplaying(self))
-        self.loop.create_task(chat_cleaner(self))
+        self.MusicPlayer = MusicPlayer(self)
+        self.MusicPlayer.bot_cmd_channel = self.get_channel(bot_cmd_channel)
+        self.MusicPlayer.player_channel = self.get_channel(player_channel)
+        self.MusicPlayer.song_request_channel = self.get_channel(song_request_channel)
+        self.MusicPlayer.song_request_queue_channel = self.get_channel(song_request_queue_channel)
+        _ = self.loop.create_task(chat_cleaner(self))
+        _ = self.loop.create_task(embed_for_nowplaying(self))
+        _ = self.loop.create_task(embed_for_queue(self))
 
     async def join(self, channel_id):
         self.voice_client = self.get_voice_client(channel_id)
-        self.MusicPlayer = MusicPlayer(self)
-        self.MusicPlayer.bot_cmd_channel = self.get_channel(bot_cmd_channel)
-        self.MusicPlayer.now_playing_channel = self.get_channel(player_channel)
-        self.MusicPlayer.queue_channel = self.get_channel(player_channel)
 
     async def auto_join(self):
         await self.wait_until_ready()
         self.voice_client = await self.get_voice_client(self.get_channel(bot_voice_channel))
-        self.MusicPlayer = MusicPlayer(self)
-        self.MusicPlayer.bot_cmd_channel = self.get_channel(bot_cmd_channel)
-        self.MusicPlayer.queue_channel = self.get_channel(player_channel)
-        self.MusicPlayer.now_playing_channel = self.get_channel(player_channel)
+
+    async def on_reaction_add(self, reaction, user):
+        roles = [y.id for y in user.roles]
+        if "498758878574673921" in roles or '502522374114246657' in roles:
+            return
+
+        if reaction.message.channel != self.MusicPlayer.song_request_queue_channel:
+            return
+
+        for request in self.MusicPlayer.request_queue:
+            if reaction.message.id == request.user_request.id:
+                if reaction.emoji == '✅':
+                    await self.MusicPlayer.add(request)
+                    self.MusicPlayer.request_queue.remove(request)
+                    await reaction.message.delete()
+                elif reaction.emoji == '❌':
+                    await request.user_request_msg.channel.send(
+                        f"{request.user_request_msg.author.mention} Your song request was declined :sweat:"
+                    )
+                    self.MusicPlayer.request_queue.remove(request)
+                    await reaction.message.delete()
 
     async def on_message(self, message):
         await self.wait_until_ready()
 
         if message.author == self.user:
-            # TODO: Log this
             return
 
         message_content = message.content.strip()
@@ -65,7 +77,7 @@ class MusicBot(discord.Client):
         if not message_content.startswith(prefix):
             return
 
-        if message.channel != self.MusicPlayer.bot_cmd_channel:
+        if message.channel != self.MusicPlayer.bot_cmd_channel and (message.channel != self.MusicPlayer.song_request_channel or not message_content.startswith('!req')):
             return
 
         if isinstance(message.channel, discord.abc.PrivateChannel):
@@ -79,6 +91,9 @@ class MusicBot(discord.Client):
 
         elif cmd == 'play' or cmd == 'p':
             await self.cmd_play(args, message)
+
+        elif cmd == 'playlist':
+            await self.cmd_play(args, message, playlist=True)
 
         elif cmd == 'join':
             await self.join(message.author.voice.channel)
@@ -107,10 +122,13 @@ class MusicBot(discord.Client):
         elif cmd == 'move' or cmd == 'm':
             await self.cmd_move_song(args)
 
+        elif cmd == 'request' or cmd == 'req':
+            await self.cmd_request(args, message)
+
     async def cmd_hello(self, message):
         await message.channel.send('Hello {0.author.mention}'.format(message))
 
-    async def cmd_play(self, url, message, download=False):
+    async def cmd_play(self, url, message, download=False, playlist=False):
         if self.voice_client is None:
             await self.auto_join()
 
@@ -120,12 +138,14 @@ class MusicBot(discord.Client):
             return
 
         if download:
-            song = await Song.download(url, loop=self.loop)
+            song = await Song.download(url, message, self)
         else:
-            song = await Song.stream(url, loop=self.loop)
+            song = await Song.stream(url, message, self, playlist=playlist)
+
+        if playlist:
+            return
 
         if song:
-            song.requester = message.author
             await self.MusicPlayer.add(song, message.channel)
         else:
             await message.channel.send(
@@ -150,7 +170,7 @@ class MusicBot(discord.Client):
     async def cmd_skip(self):
         if self.MusicPlayer.is_playing() and self.MusicPlayer.current:
             self.MusicPlayer.skip()
-            await self.get_channel(bot_cmd_channel).send(":track_next: Skipping")
+            await self.get_channel(bot_cmd_channel).send(f":track_next: Skipping {self.MusicPlayer.current.song_name}")
 
     async def cmd_pause(self):
         self.MusicPlayer.pause()
@@ -169,7 +189,7 @@ class MusicBot(discord.Client):
             index = int(index)
             await self.get_channel(bot_cmd_channel).send(
                 f":boom: {self.MusicPlayer.queue[index-1].song_name} was Removed")
-            del self.MusicPlayer.queue[index + 1]
+            del self.MusicPlayer.queue[index - 1]
 
     async def cmd_move_song(self, arg):
         if len(arg.split(" ")) == 2:
@@ -184,8 +204,8 @@ class MusicBot(discord.Client):
             current = int(current)
             if new and new.isdigit() and len(self.MusicPlayer.queue) >= int(new):
                 new = int(new)
-                song = self.MusicPlayer.queue.pop(current-1)
-                self.MusicPlayer.queue.insert(new-1, song)
+                song = self.MusicPlayer.queue.pop(current - 1)
+                self.MusicPlayer.queue.insert(new - 1, song)
                 if current > new:
                     await self.get_channel(bot_cmd_channel).send(
                         f":arrow_up_small:  {song.song_name} was Moved #{new}")
@@ -194,10 +214,15 @@ class MusicBot(discord.Client):
                         f":arrow_down_small: {song.song_name} was Moved #{new}")
 
             else:
-                song = self.MusicPlayer.queue.pop(current-1)
+                song = self.MusicPlayer.queue.pop(current - 1)
                 self.MusicPlayer.queue.insert(0, song)
                 await self.get_channel(bot_cmd_channel).send(
                     f":arrow_double_up: {song.song_name} was Moved to the Top of the Queue")
+
+    async def cmd_request(self, arg, message):
+        if arg == '':
+            return
+        await Song.search(arg, message, self)
 
 
 bot = MusicBot()
