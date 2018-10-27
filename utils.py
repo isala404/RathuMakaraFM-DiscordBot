@@ -127,8 +127,12 @@ async def embed_for_nowplaying(bot):
                         bot.logger.warning(
                             f"Bot Hit a Idle status\nqueue = {player.queue}, is_pause = {player.is_pause}, play_next_song = {player.play_next_song}, current = {player.current}")
                         bot.logger.warning("Restarting Bot")
+                        queue = bot.MusicPlayer.queue
                         await bot.cmd_reset()
+                        bot.MusicPlayer.queue = queue
                         bot.MusicPlayer.autoplay = True
+                        await asyncio.sleep(5)
+                        continue
 
             try:
                 if bot.now_playing_msg is None:
