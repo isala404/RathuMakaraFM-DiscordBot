@@ -11,8 +11,8 @@ queue_msg_holder = []
 async def embed_for_queue(bot):
     await bot.wait_until_ready()
     await asyncio.sleep(5)
-    # while not bot.now_playing_msg:
-    #     await asyncio.sleep(1)
+    while not bot.now_playing_msg:
+        await asyncio.sleep(1)
     while True:
         try:
             embeds = list(chunks(bot.MusicPlayer.queue, 23))
@@ -164,6 +164,8 @@ async def update_song_progress(bot):
         if bot.MusicPlayer.current and bot.MusicPlayer.is_playing() and not bot.MusicPlayer.is_pause:
             bot.current.song_progress += 1
             await asyncio.sleep(1)
+        else:
+            await asyncio.sleep(0.1)
 
 
 async def chat_cleaner(bot):
