@@ -4,7 +4,11 @@ import youtube_dl
 import discord
 import re
 from difflib import SequenceMatcher
+from requests_html import AsyncHTMLSession, HTMLSession
+from random import shuffle
 
+asession = AsyncHTMLSession()
+session = HTMLSession()
 
 # Suppress noise about console usage from errors
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -41,75 +45,110 @@ class MusicPlayer:
         self.song_request_channel = None
         self.song_request_queue_channel = None
         self.bot_cmd_channel = None
+        self.playlist_queue_channel = None
         self.audio_player = self.bot.loop.create_task(self.audio_player_task())
-        self.volume = 1
+        self.auto_playlist_loop = self.bot.loop.create_task(self.create_auto_playlist())
+        self.volume = 0.5
         self.request_queue = []
+        self.auto_playlist = []
+        self.is_pause = False
+        self.autoplay = True
 
     def is_playing(self):
         return self.voice.is_playing()
 
     def skip(self):
-        self.voice.stop()
-        self.play_next_song = True
+        if self.is_playing() or self.is_pause:
+            self.voice.stop()
+            self.play_next_song = True
+            self.is_pause = False
 
     def pause(self):
         if self.is_playing():
             self.voice.pause()
+            self.is_pause = True
 
     def resume(self):
         if not self.is_playing():
             self.voice.resume()
+            self.is_pause = False
 
     def clear(self):
         self.voice.stop()
         self.queue = []
+        self.is_pause = False
+        self.play_next_song = True
+        self.current = None
 
     def set_volume(self, volume):
         self.volume = volume / 100
-        if self.is_playing and self.current:
+        if self.current:
             self.current.volume = volume / 100
+
+    def progress(self):
+        return round(self.voice._player.loops * 0.02)
 
     def toggle_play_next_song(self):
         self.play_next_song = True
+        self.is_pause = False
 
-    async def add(self, song, channel=None):
-        self.queue.append(song)
+    async def add(self, song, channel=None, play_now=False):
+        if play_now:
+            self.queue.insert(0, song)
+        else:
+            if len(self.queue) >= 20 and channel and song.requester:
+                await channel.send(f"{song.requester.mention} Queue is full, try again in bit :x: ")
+                return
+            self.queue.append(song)
         if channel:
             await channel.send(
                 f':white_check_mark: {song.song_name} by {song.song_uploader} was added to the queue\n{song.song_webpage_url}')
-        else:
-            if song.user_request_msg:
-                await song.user_request_msg.channel.send(
-                    f"{song.user_request_msg.author.mention} Your song request was accepted :blush:"
-                )
 
     async def request(self, song):
         song.user_request = await self.song_request_queue_channel.send(
-            f"{song.user_request_msg.author.mention} Requested {song.song_webpage_url}")
+            f"{song.requester.mention} Requested {song.song_webpage_url}")
         self.request_queue.append(song)
+
+    async def create_auto_playlist(self):
+        while True:
+            self.auto_playlist = []
+            if self.playlist_queue_channel:
+                async for message in self.playlist_queue_channel.history(limit=None):
+                    message = message.content.strip()
+                    self.auto_playlist.append(message)
+                await asyncio.sleep(300)
+            else:
+                await asyncio.sleep(1)
 
     async def audio_player_task(self):
         while True:
             if self.queue and self.play_next_song:
                 self.current = self.queue.pop(0)
                 self.current.volume = self.volume
-
                 try:
                     activity = discord.Game(f"{self.current.song_name} by {self.current.song_uploader}")
                     await self.bot.change_presence(status=discord.Status.online, activity=activity)
-                except:
-                    pass
+                except Exception as e:
+                    self.bot.logger.error("Unable to Change Bot Activity")
+                    self.bot.logger.exception(e)
+                # self.bot.logger.debug(f"Now Playing: {self.current.song_name} by {self.current.song_uploader}")
 
                 # Some kind of a weird bug in after argument require to pass toggle like this
-                self.voice.play(self.current,
-                                after=lambda e: self.toggle_play_next_song() if e else self.toggle_play_next_song())
+                try:
+                    self.voice.play(self.current,
+                                    after=lambda e: self.toggle_play_next_song() if e else self.toggle_play_next_song())
+                except Exception as e:
+                    self.bot.logger.critical(f"Can't Play {self.current.song_webpage_url}")
+                    self.bot.logger.exception(e)
+
                 self.play_next_song = False
+
             else:
                 await asyncio.sleep(0.01)
 
 
 class Song(discord.PCMVolumeTransformer):
-    def __init__(self, source, *, data, volume=0.4):
+    def __init__(self, source, *, data, volume=0.5):
         super().__init__(source, volume)
 
         self.song_name = None
@@ -124,28 +163,19 @@ class Song(discord.PCMVolumeTransformer):
         self.song_playlist_size = None
         self.requester = None
         self.song_webpage_url = None
-        self.user_request_msg = None
         self.user_request = None
         self.update_metadata(data)
 
     @classmethod
-    async def stream(cls, url, message, bot, playlist=False):
+    async def stream(cls, url, message, bot):
         loop = bot.loop or asyncio.get_event_loop()
-
         # noinspection PyBroadException
         try:
-            if playlist:
-                await message.channel.send(':robot: I am Processing the Playlist this may take few minutes')
             data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
-        except Exception:
+        except Exception as e:
+            bot.logger.error(f"Error While Streaming {url}")
+            bot.logger.exception(e)
             return None
-
-        if playlist and 'entries' in data and data['entries'][0]['playlist'] != '':
-            for entry in data['entries']:
-                entry['requester'] = message.author
-                await bot.MusicPlayer.add(cls(discord.FFmpegPCMAudio(entry['url'], **ffmpeg_options), data=entry),
-                                          message.channel)
-            return True
 
         if 'entries' in data:
             data = data['entries'][0]
@@ -154,43 +184,95 @@ class Song(discord.PCMVolumeTransformer):
         return cls(discord.FFmpegPCMAudio(data['url'], **ffmpeg_options), data=data)
 
     @classmethod
-    async def download(cls, url, message, bot):
+    async def download(cls, url, message, bot, playlist=False, author=None):
         loop = bot.loop or asyncio.get_event_loop()
-
-        # noinspection PyBroadException
+        bot.logger.info(f"Downloading {url}")
         try:
+            if playlist and message:
+                await message.channel.send(':robot: I am Processing the Playlist this may take few minutes')
             data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=True))
-        except Exception:
+        except Exception as e:
+            bot.logger.error(f"Error While Downloading {url}")
+            bot.logger.exception(e)
             return None
+
+        if playlist and 'entries' in data and data['entries'][0]['playlist'] != '' and message:
+            shuffle(data['entries'])
+            for entry in data['entries']:
+                entry['requester'] = message.author
+                entry['path'] = ytdl.prepare_filename(entry)
+                await bot.MusicPlayer.add(cls(discord.FFmpegPCMAudio(entry['url'], **ffmpeg_options), data=entry),
+                                          message.channel)
+            return True
 
         if 'entries' in data:
             data = data['entries'][0]
-        data['requester'] = message.author
+        if message:
+            data['requester'] = message.author
+        else:
+            data['requester'] = author
+        data['path'] = ytdl.prepare_filename(data)
 
-        return cls(discord.FFmpegPCMAudio(ytdl.prepare_filename(data), **ffmpeg_options), data=data)
+        return cls(discord.FFmpegPCMAudio(data['path'], **ffmpeg_options), data=data)
 
     @classmethod
-    async def search(cls, url, message, bot):
+    async def podcast(cls, url, message, bot):
+        try:
+            data = {'title': None, 'thumbnail': None, 'webpage_url': url, 'url': None, 'extractor': 'Podcasts',
+                    'uploader': 'Rathumakara FM'}
+            r = await asession.get(url)
+            await r.html.arender()
+            data['thumbnail'] = r.html.find('#podcast_logo', first=True).attrs['src']
+            if data['thumbnail'].startswith('/'):
+                data['thumbnail'] = 'http://www.podcasts.com' + data['thumbnail']
+            audio_file = r.html.find('source', first=True).attrs['src']
+            if not audio_file:
+                return None
+            data['url'] = 'http://www.podcasts.com' + audio_file
+            data['title'] = r.html.find('#episode_title', first=True).find('h2', first=True).text
+            data['requester'] = message.author
+
+            for i in r.html.find('p'):
+                if 'Podcast by ' in i.text:
+                    for y in i.text.split(' '):
+                        if "@" in y:
+                            data['uploader'] = y.strip('@')
+                            break
+                    break
+
+            return cls(discord.FFmpegPCMAudio(data['url'], **ffmpeg_options), data=data)
+        except Exception as e:
+            bot.logger.error(f"Error While Phasing {url}")
+            bot.logger.exception(e)
+            return None
+
+    @classmethod
+    async def search(cls, url, message, bot, author=None):
         loop = bot.loop or asyncio.get_event_loop()
 
-        # noinspection PyBroadException
         try:
             data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
-        except Exception:
+        except Exception as e:
+            bot.logger.error(f"Error While Searching for {url}")
+            bot.logger.exception(e)
             return None
 
         if 'entries' in data:
             data = data['entries'][0]
-        data['request'] = message
-        data['requester'] = message.author
-
-        await message.add_reaction("👌")
+        if message:
+            data['requester'] = message.author
+            await message.add_reaction("👌")
+        elif author:
+            data['requester'] = author
+        else:
+            bot.logger.warning(f"Can't Find the user who requested {data['webpage_url']}")
+            return None
 
         await bot.MusicPlayer.request(cls(discord.FFmpegPCMAudio(data['url'], **ffmpeg_options), data=data))
         return None
 
     def update_metadata(self, data):
-        if 'title' in data.keys() and data['uploader']:
+        if 'title' in data.keys() and 'uploader' in data.keys():
             self.song_name, self.song_uploader = extract_song_artist_title(data['title'], data['uploader'])
 
         if 'name' in data.keys() and 'title' not in data.keys():
@@ -225,9 +307,6 @@ class Song(discord.PCMVolumeTransformer):
 
         if 'requester' in data.keys():
             self.requester = data['requester']
-
-        if 'request' in data.keys():
-            self.user_request_msg = data['request']
 
 
 def extract_song_artist_title(name, artist):

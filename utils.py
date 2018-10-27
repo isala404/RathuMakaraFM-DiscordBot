@@ -1,14 +1,16 @@
+from random import choice
 import discord
-import datetime
 import asyncio
 from bot_constants import *
+import subprocess
+import select
 
 queue_msg_holder = []
 
 
 async def embed_for_queue(bot):
     await bot.wait_until_ready()
-    await asyncio.sleep(2)
+    await asyncio.sleep(5)
     while True:
         try:
             embeds = list(chunks(bot.MusicPlayer.queue, 23))
@@ -42,7 +44,7 @@ async def embed_for_queue(bot):
                     text = "`{}.`[{} by {}]({}) | `{} Requested by: {}`".format(
                         songs, song.song_name, song.song_uploader,
                         song.song_webpage_url.replace("www.youtube.com/watch?v=", "youtu.be/"),
-                        format_time(song.song_duration), song.requester.name
+                        format_time(song.song_duration) if song.song_duration else "", song.requester.name
                     )
                     embed.add_field(name="\u200b", value=text)
                     songs += 1
@@ -58,17 +60,27 @@ async def embed_for_queue(bot):
                 queue_msg_holder.remove(msg)
 
             await asyncio.sleep(5)
+
         except Exception as e:
-            print(e)
+            bot.logger.error("Error While Displaying Queue")
+            bot.logger.exception(e)
             await asyncio.sleep(2)
 
 
 async def embed_for_nowplaying(bot):
     await bot.wait_until_ready()
-    await asyncio.sleep(1)
+    await asyncio.sleep(3)
     while True:
         try:
             player = bot.MusicPlayer
+            if player.is_pause and player.current:
+                activity = discord.Game(f"{player.current.song_name} by {player.current.song_uploader}")
+                await player.bot.change_presence(status=discord.Status.idle, activity=activity)
+                while player.is_pause:
+                    await asyncio.sleep(1)
+                await player.bot.change_presence(status=discord.Status.online, activity=activity)
+                continue
+
             if player.current and player.is_playing():
                 embed = discord.Embed(title=f"Now Playing",
                                       description=f"[{player.current.song_name}]({player.current.song_webpage_url})",
@@ -77,18 +89,19 @@ async def embed_for_nowplaying(bot):
                 if player.current.song_thumbnail:
                     embed.set_image(url=f"{player.current.song_thumbnail}")
 
-                if not player.current.song_duration:
+                if player.current.song_is_live:
                     embed.add_field(name=f"`{progress_bar(1, 1)}`",
-                                    value=":red_circle: Live Stream",
+                                    value=f":red_circle: Live Stream - {format_time(player.progress())}",
                                     inline=False)
-                elif hasattr(player.current, 'progress'):
-                    embed.add_field(name=f"`{progress_bar(player.current.progress, player.current.song_duration)}`",
-                                    value=f"`{format_time(player.current.progress)}/{format_time(player.current.song_duration)}`",
+
+                elif not player.current.song_duration:
+                    embed.add_field(name=f"`{progress_bar(player.progress(), player.progress())}`",
+                                    value=f"`{format_time(player.progress())}/{format_time(player.progress())}`",
                                     inline=False)
                 else:
                     embed.add_field(
-                        name=f"`{progress_bar(player.current.song_duration, player.current.song_duration)}`",
-                        value=f"`{format_time(player.current.song_duration)}/{format_time(player.current.song_duration)}`",
+                        name=f"`{progress_bar(player.progress(), player.current.song_duration)}`",
+                        value=f"`{format_time(player.progress())}/{format_time(player.current.song_duration)}`",
                         inline=False)
 
                 embed.add_field(name="By", value=f"`{player.current.song_uploader}`".title(), inline=True)
@@ -102,25 +115,41 @@ async def embed_for_nowplaying(bot):
                                       description="type !play `[song name|url]` or !request `[song name|url]` to play a song",
                                       colour=discord.Colour(0x3f8517))
 
-            if bot.now_playing_msg is None:
+                if player.autoplay:
+                    if not player.queue:
+                        player.clear()
+                        song = choice(player.auto_playlist)
+                        bot.logger.info(f"Queue is empty, Auto Playing: {clean_link(song)}")
+                        await player.bot.cmd_play(song, None, download=False, author=player.bot.user)
+                    else:
+                        bot.logger.warning(
+                            f"Bot Hit a Idle status\nqueue = {player.queue}, is_pause = {player.is_pause}, play_next_song = {player.play_next_song}, current = {player.current}")
+
+            try:
+                if bot.now_playing_msg is None:
+                    bot.now_playing_msg = await bot.MusicPlayer.player_channel.send(embed=embed)
+                else:
+                    await bot.now_playing_msg.edit(embed=embed)
+            except Exception as e:
+                bot.logger.error("Error While Updating Now Playing")
+                bot.logger.exception(e)
                 bot.now_playing_msg = await bot.MusicPlayer.player_channel.send(embed=embed)
-            else:
-                await bot.now_playing_msg.edit(embed=embed)
 
             if player.is_playing() and player.current.song_duration:
                 await asyncio.sleep(player.current.song_duration / 35)
+            elif player.is_playing() and not player.current.song_duration:
+                await asyncio.sleep(10)
             else:
-                while not bot.MusicPlayer.current and not hasattr(bot.MusicPlayer.current, 'song_duration'):
-                    await asyncio.sleep(0.5)
+                await asyncio.sleep(5)
 
         except Exception as e:
-            print(e)
+            bot.logger.error("Error While Displaying Now Playing")
+            bot.logger.exception(e)
             await asyncio.sleep(2)
 
 
 async def chat_cleaner(bot):
     await bot.wait_until_ready()
-    await asyncio.sleep(1)
     async for message in bot.get_channel(player_channel).history(limit=None):
         await message.delete()
     async for message in bot.get_channel(song_request_queue_channel).history(limit=None):
@@ -133,6 +162,14 @@ async def chat_cleaner(bot):
 
         async for message in bot.get_channel(song_request_queue_channel).history(limit=None):
             if message.author != bot.user:
+                await message.delete()
+
+        async for message in bot.get_channel(bot_log_channel).history(limit=None):
+            if message.author != bot.user:
+                await message.delete()
+
+        async for message in bot.get_channel(cmd_help_channel).history(limit=None):
+            if message.author != bot.get_user(supiri):
                 await message.delete()
 
 
@@ -148,7 +185,7 @@ def format_time(seconds):
     return "%02d:%02d" % (m, s)
 
 
-def progress_bar(iteration, total, prefix='', suffix='', decimals=1, length=35, fill='▰'):
+def progress_bar(iteration, total, prefix_='', suffix='', decimals=1, length=35, fill='▰'):
     """
     Credit - https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
     Call in a loop to create terminal progress bar
@@ -164,4 +201,22 @@ def progress_bar(iteration, total, prefix='', suffix='', decimals=1, length=35, 
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
     filled_length = int(length * iteration // total)
     bar = fill * filled_length + '▱' * (length - filled_length)
-    return '%s |%s| %s%% %s' % (prefix, bar, percent, suffix)
+    return '%s |%s| %s%% %s' % (prefix_, bar, percent, suffix)
+
+
+def clean_link(string):
+    # for url in re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', string):
+    #     print(url)
+    #     string.replace(url, f"<{url}>")
+    return string
+
+
+async def stream_logs(filename, bot):
+    f = subprocess.Popen(['tail', '-F', filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = select.poll()
+    p.register(f.stdout)
+    await bot.get_channel(bot_log_channel).send("```\n```")
+    while True:
+        if p.poll(1):
+            await bot.get_channel(bot_log_channel).send(f"```py\n{f.stdout.readline().decode().strip()}```")
+        await asyncio.sleep(1)

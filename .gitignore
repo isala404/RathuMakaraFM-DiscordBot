@@ -2,3 +2,4 @@ bot_constants.py
 *.pyo
 *.pyc
 .idea/
+logs/*
