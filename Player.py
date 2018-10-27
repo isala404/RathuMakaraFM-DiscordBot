@@ -122,7 +122,7 @@ class MusicPlayer:
 
     async def audio_player_task(self):
         while True:
-            if self.queue and self.play_next_song and not self.is_playing():
+            if self.queue and self.play_next_song and (not self.is_playing() and not self.is_pause):
                 self.current = self.queue.pop(0)
                 self.current.volume = self.volume
                 try:
