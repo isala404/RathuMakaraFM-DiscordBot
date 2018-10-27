@@ -162,7 +162,7 @@ async def update_song_progress(bot):
     await asyncio.sleep(3)
     while True:
         if bot.MusicPlayer.current and bot.MusicPlayer.is_playing() and not bot.MusicPlayer.is_pause:
-            bot.current.song_progress += 1
+            bot.MusicPlayer.current.song_progress += 1
             await asyncio.sleep(1)
         else:
             await asyncio.sleep(0.1)

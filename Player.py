@@ -90,6 +90,7 @@ class MusicPlayer:
         if self.current:
             return self.current.song_progress
         else:
+            self.bot.logger.warning("Player Progress is called without a song")
             return 0
 
     def toggle_play_next_song(self):
