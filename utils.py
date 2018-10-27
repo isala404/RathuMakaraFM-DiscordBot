@@ -97,7 +97,7 @@ async def embed_for_nowplaying(bot):
                                     inline=False)
 
                 elif not player.current.song_duration:
-                    embed.add_field(name=f"`{progress_bar(player.song_progress), player.progress())}`",
+                    embed.add_field(name=f"`{progress_bar(player.song_progress, player.song_progress)}`",
                                     value=f"`{format_time(player.song_progress)}/{format_time(player.song_progress)}`",
                                     inline=False)
                 else:
