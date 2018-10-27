@@ -86,7 +86,11 @@ class MusicPlayer:
             self.current.volume = volume / 100
 
     def progress(self):
-        return round(self.voice._player.loops * 0.02)
+        # return round(self.voice._player.loops * 0.02)
+        if self.current:
+            return self.current.song_progress
+        else:
+            return 0
 
     def toggle_play_next_song(self):
         self.play_next_song = True
