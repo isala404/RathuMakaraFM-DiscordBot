@@ -93,17 +93,17 @@ async def embed_for_nowplaying(bot):
 
                 if player.current.song_is_live:
                     embed.add_field(name=f"`{progress_bar(1, 1)}`",
-                                    value=f":red_circle: Live Stream - {format_time(player.song_progress)}",
+                                    value=f":red_circle: Live Stream - {format_time(player.current.song_progress)}",
                                     inline=False)
 
                 elif not player.current.song_duration:
-                    embed.add_field(name=f"`{progress_bar(player.song_progress, player.song_progress)}`",
-                                    value=f"`{format_time(player.song_progress)}/{format_time(player.song_progress)}`",
+                    embed.add_field(name=f"`{progress_bar(player.current.song_progress, player.current.song_progress)}`",
+                                    value=f"`{format_time(player.current.song_progress)}/{format_time(player.current.song_progress)}`",
                                     inline=False)
                 else:
                     embed.add_field(
-                        name=f"`{progress_bar(player.song_progress, player.current.song_duration)}`",
-                        value=f"`{format_time(player.song_progress)}/{format_time(player.current.song_duration)}`",
+                        name=f"`{progress_bar(player.current.song_progress, player.current.song_duration)}`",
+                        value=f"`{format_time(player.current.song_progress)}/{format_time(player.current.song_duration)}`",
                         inline=False)
 
                 embed.add_field(name="By", value=f"`{player.current.song_uploader}`".title(), inline=True)
