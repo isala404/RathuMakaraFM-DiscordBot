@@ -1,4 +1,4 @@
-Commands for @admin#8462/@DJ
+Commands for @admin/@DJ
 ```diff
 !play [song url | song name]                                          (alias - !p)
 -  Play Song from url or search youtube if only a name is given
