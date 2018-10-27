@@ -52,7 +52,7 @@ class MusicPlayer:
         self.request_queue = []
         self.auto_playlist = []
         self.is_pause = False
-        self.autoplay = False
+        self.autoplay = True
 
     def is_playing(self):
         return self.voice.is_playing()
