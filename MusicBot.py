@@ -159,6 +159,12 @@ class MusicBot(discord.Client):
         elif cmd == 'reset':
             await self.cmd_reset()
 
+        elif cmd == 'leave' or cmd == 'fuckoff':
+            self.logger.info("Bot is disconnecting")
+            if self.voice_client and self.voice_client.is_connected():
+                await self.voice_client.disconnect()
+            await message.channel.send(':hand_splayed: :hand_splayed:')
+
         else:
             await message.channel.send(
                 '{0.author.mention} !{1} is invalid command refer #bot-command-list for more info'.format(message, cmd))
