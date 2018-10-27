@@ -31,6 +31,7 @@ class MusicBot(discord.Client):
         self.logger.debug(f"Starting Bot as {self.user.name} ")
         self.loop.create_task(embed_for_nowplaying(self))
         self.loop.create_task(embed_for_queue(self))
+        self.loop.create_task(update_song_progress(self))
 
     async def on_connect(self):
         await self.auto_join()

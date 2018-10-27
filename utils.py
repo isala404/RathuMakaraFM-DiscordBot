@@ -11,6 +11,8 @@ queue_msg_holder = []
 async def embed_for_queue(bot):
     await bot.wait_until_ready()
     await asyncio.sleep(5)
+    while not bot.now_playing_msg:
+        await asyncio.sleep(1)
     while True:
         try:
             embeds = list(chunks(bot.MusicPlayer.queue, 23))
@@ -91,17 +93,17 @@ async def embed_for_nowplaying(bot):
 
                 if player.current.song_is_live:
                     embed.add_field(name=f"`{progress_bar(1, 1)}`",
-                                    value=f":red_circle: Live Stream - {format_time(player.progress())}",
+                                    value=f":red_circle: Live Stream - {format_time(player.song_progress)}",
                                     inline=False)
 
                 elif not player.current.song_duration:
-                    embed.add_field(name=f"`{progress_bar(player.progress(), player.progress())}`",
-                                    value=f"`{format_time(player.progress())}/{format_time(player.progress())}`",
+                    embed.add_field(name=f"`{progress_bar(player.song_progress), player.progress())}`",
+                                    value=f"`{format_time(player.song_progress)}/{format_time(player.song_progress)}`",
                                     inline=False)
                 else:
                     embed.add_field(
-                        name=f"`{progress_bar(player.progress(), player.current.song_duration)}`",
-                        value=f"`{format_time(player.progress())}/{format_time(player.current.song_duration)}`",
+                        name=f"`{progress_bar(player.song_progress, player.current.song_duration)}`",
+                        value=f"`{format_time(player.song_progress)}/{format_time(player.current.song_duration)}`",
                         inline=False)
 
                 embed.add_field(name="By", value=f"`{player.current.song_uploader}`".title(), inline=True)
@@ -119,11 +121,14 @@ async def embed_for_nowplaying(bot):
                     if not player.queue:
                         player.clear()
                         song = choice(player.auto_playlist)
-                        bot.logger.info(f"Queue is empty, Auto Playing: {clean_link(song)}")
+                        bot.logger.info(f"Queue is empty, Auto Playing: {song}")
                         await player.bot.cmd_play(song, None, download=False, author=player.bot.user)
                     else:
                         bot.logger.warning(
                             f"Bot Hit a Idle status\nqueue = {player.queue}, is_pause = {player.is_pause}, play_next_song = {player.play_next_song}, current = {player.current}")
+                        bot.logger.warning("Restarting Bot")
+                        await bot.cmd_reset()
+                        bot.MusicPlayer.autoplay = True
 
             try:
                 if bot.now_playing_msg is None:
@@ -146,6 +151,15 @@ async def embed_for_nowplaying(bot):
             bot.logger.error("Error While Displaying Now Playing")
             bot.logger.exception(e)
             await asyncio.sleep(2)
+
+
+async def update_song_progress(bot):
+    await bot.wait_until_ready()
+    await asyncio.sleep(3)
+    while True:
+        if bot.current and bot.MusicPlayer.is_playing() and not bot.MusicPlayer.is_pause:
+            bot.current.song_progress += 1
+            await asyncio.sleep(1)
 
 
 async def chat_cleaner(bot):
@@ -202,13 +216,6 @@ def progress_bar(iteration, total, prefix_='', suffix='', decimals=1, length=35,
     filled_length = int(length * iteration // total)
     bar = fill * filled_length + '▱' * (length - filled_length)
     return '%s |%s| %s%% %s' % (prefix_, bar, percent, suffix)
-
-
-def clean_link(string):
-    # for url in re.findall('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', string):
-    #     print(url)
-    #     string.replace(url, f"<{url}>")
-    return string
 
 
 async def stream_logs(filename, bot):

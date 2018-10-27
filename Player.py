@@ -52,7 +52,7 @@ class MusicPlayer:
         self.request_queue = []
         self.auto_playlist = []
         self.is_pause = False
-        self.autoplay = True
+        self.autoplay = False
 
     def is_playing(self):
         return self.voice.is_playing()
@@ -164,6 +164,7 @@ class Song(discord.PCMVolumeTransformer):
         self.requester = None
         self.song_webpage_url = None
         self.user_request = None
+        self.song_progress = 0
         self.update_metadata(data)
 
     @classmethod
