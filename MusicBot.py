@@ -52,6 +52,8 @@ class MusicBot(discord.Client):
 
     async def auto_join(self):
         await self.wait_until_ready()
+        if self.voice_client.is_connected():
+            await self.voice_client.disconnect()
         self.voice_client = await self.get_voice_client(self.get_channel(bot_voice_channel))
         self.logger.debug(f"Auto Joining {self.get_channel(bot_voice_channel).mention}")
 
@@ -153,8 +155,25 @@ class MusicBot(discord.Client):
         elif cmd == 'autoplay' or cmd == 'ap':
             await self.cmd_autoplay(args, message)
 
+        elif cmd == 'reset':
+            await self.cmd_reset()
+
+        else:
+            await message.channel.send(
+                '{0.author.mention} !{1} is invalid command refer #bot-command-list for more info'.format(message, cmd))
+
     async def cmd_hello(self, message):
         await message.channel.send('Hello {0.author.mention}'.format(message))
+
+    async def cmd_reset(self):
+        await self.MusicPlayer.bot_cmd_channel.send(":arrows_counterclockwise: Restarting Bot")
+        await self.auto_join()
+        self.MusicPlayer = MusicPlayer(self)
+        self.MusicPlayer.bot_cmd_channel = self.get_channel(bot_cmd_channels[0])
+        self.MusicPlayer.player_channel = self.get_channel(player_channel)
+        self.MusicPlayer.song_request_channel = self.get_channel(song_request_channel)
+        self.MusicPlayer.song_request_queue_channel = self.get_channel(song_request_queue_channel)
+        self.MusicPlayer.playlist_queue_channel = self.get_channel(playlist_queue_channel)
 
     async def cmd_play(self, url, message, download=False, playlist=False, author=None, play_now=False):
         if self.voice_client is None:
@@ -173,8 +192,6 @@ class MusicBot(discord.Client):
             song = await Song.download(url, None, self, author=author)
             await self.MusicPlayer.add(song, None)
             return True
-        elif not self.MusicPlayer.queue and not playlist:
-            song = await Song.stream(url, message, self)
         elif download and not playlist:
             song = await Song.download(url, message, self)
         elif playlist:
