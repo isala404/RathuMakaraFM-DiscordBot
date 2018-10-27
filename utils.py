@@ -11,8 +11,8 @@ queue_msg_holder = []
 async def embed_for_queue(bot):
     await bot.wait_until_ready()
     await asyncio.sleep(5)
-    while not bot.now_playing_msg:
-        await asyncio.sleep(1)
+    # while not bot.now_playing_msg:
+    #     await asyncio.sleep(1)
     while True:
         try:
             embeds = list(chunks(bot.MusicPlayer.queue, 23))
