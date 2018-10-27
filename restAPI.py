@@ -121,4 +121,4 @@ if __name__ == "__main__":
         app.run(host=web_api_ip)
     thread = threading.Thread(target=start_server)
     thread.start()
-    bot.run(auth_key)
+    bot.run(bot_auth_key)

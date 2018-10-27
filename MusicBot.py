@@ -326,7 +326,7 @@ if __name__ == "__main__":
     bot = None
     try:
         bot = MusicBot()
-        bot.run(auth_key)
+        bot.run(bot_auth_key)
     except InterruptedError:
         if bot:
             bot.logger.info("Shutting Down")
