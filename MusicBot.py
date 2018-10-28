@@ -63,6 +63,7 @@ class MusicBot(discord.Client):
             return
 
         if not [y.id for y in user.roles if int(y.id) in bot_commanders]:
+            self.logger.info(f"{user.name} is not authorized to accept song requests")
             return
 
         for request in self.MusicPlayer.request_queue:
