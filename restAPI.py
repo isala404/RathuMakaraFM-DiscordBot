@@ -13,7 +13,7 @@ app = Flask(__name__)
 def player_info():
     bot.logger.info(f"API Request for {request.path} from {request.remote_addr}")
     if bot and bot.MusicPlayer:
-        if bot.MusicPlayer.current and bot.MusicPlayer.is_playing():
+        if bot.MusicPlayer.current:
             d = {"Now Playing": {"song": bot.MusicPlayer.current.song_name,
                                  "uploader": bot.MusicPlayer.current.song_name,
                                  "thumbnail": bot.MusicPlayer.current.song_thumbnail,
@@ -21,7 +21,9 @@ def player_info():
                                  "duration": bot.MusicPlayer.current.song_duration,
                                  "progress": bot.MusicPlayer.progress(),
                                  "extractor": bot.MusicPlayer.current.song_extractor,
-                                 "requester": bot.MusicPlayer.current.requester.name},
+                                 "requester": bot.MusicPlayer.current.requester.name,
+                                 "pause": bot.MusicPlayer.is_pause
+                                 },
                  'Queue': []}
         else:
             d = {"Now Playing": {"song": None, "uploader": None, "thumbnail": None, "url": None, "duration": None,
@@ -67,11 +69,18 @@ def user_info():
 
         user = bot.get_user(int(data['user_id']))
         if not user:
-            return json.dumps({'error': 'User was not found'}), 401, {'ContentType': 'application/json'}
+            return json.dumps({'error': 'User was not found'}), 404, {'ContentType': 'application/json'}
+
+        guild = bot.get_guild(GUILD_ID)
+        if not guild:
+            return json.dumps({'error': 'Server was not found'}), 404, {'ContentType': 'application/json'}
+        member = guild.get_member(user.id)
+        if not member:
+            return json.dumps({'error': 'User was not found on the server'}), 404, {'ContentType': 'application/json'}
 
         d = {
             'name': user.name,
-            'roles': [y.id for y in user.roles],
+            'roles': [y.id for y in member.roles],
             'is_bot': user.bot,
             'dm_channel': user.dm_channel,
             'created_at': user.created_at,
@@ -106,12 +115,23 @@ def bot_command():
         if web_api_auth_key == data['authkey']:
             return json.dumps({'error': 'Invalid Auth Key'}), 401, {'ContentType': 'application/json'}
 
-        if data['cmd'] != "request" and not [y.id for y in bot.get_user(int(data['user_id'])).roles if
+        user = bot.get_user(int(data['user_id']))
+        if not user:
+            return json.dumps({'error': 'User was not found'}), 404, {'ContentType': 'application/json'}
+
+        guild = bot.get_guild(GUILD_ID)
+        if not guild:
+            return json.dumps({'error': 'Server was not found'}), 404, {'ContentType': 'application/json'}
+        member = guild.get_member(user.id)
+        if not member:
+            return json.dumps({'error': 'User was not found on the server'}), 404, {'ContentType': 'application/json'}
+
+        if data['cmd'] != "request" and not [y.id for y in member.roles if
                                              y.id in bot_commanders]:
             return json.dumps({'error': 'User Don\'t have permission for this action'}), 401, {'ContentType': 'application/json'}
 
         result = asyncio.run_coroutine_threadsafe(
-            parse_cmd(data['cmd'], data['args'], bot.get_user(int(data['user_id']))), bot.loop)
+            parse_cmd(data['cmd'], data['args'], user), bot.loop)
 
         if result.result():
             return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
