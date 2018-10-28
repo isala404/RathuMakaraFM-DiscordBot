@@ -26,6 +26,8 @@ Commands for @admin/@DJ
 -  Enable/Disable Auto Playing Music if Queue is empty
 !shuffle
 -  Pseudo randomly shuffle the queue
+!reset
+-  Restart the bot
 !move [song to be moved] [position to be moved]                       (alias - !m)
 -  Change the position of the song in the queue, if second 
 -  option is not give song will be moved to top of the queue

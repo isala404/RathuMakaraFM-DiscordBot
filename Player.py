@@ -111,7 +111,7 @@ class MusicPlayer:
     async def request(self, song):
         song.user_request = await self.song_request_queue_channel.send(
             f"{song.requester.mention} Requested {song.song_webpage_url}")
-        self.bot.logger.info(f"Song Request from {song.requester.mention} ({song.song_webpage_url})\n {song.user_request}")
+        self.bot.logger.info(f"Song Request from {song.requester} ({song.song_webpage_url})\n {song.user_request}")
         self.request_queue.append(song)
 
     async def create_auto_playlist(self):
