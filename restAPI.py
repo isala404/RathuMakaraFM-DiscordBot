@@ -20,6 +20,7 @@ app = Flask(__name__)
 
 @app.route('/API/bot/get/player')
 def player_info():
+    bot.logger.info(f"API Request for {request.path} from {request.remote_addr}")
     if bot and bot.MusicPlayer:
         if bot.MusicPlayer.current and bot.MusicPlayer.is_playing():
             d = {"Now Playing": {"song": bot.MusicPlayer.current.song_name,
@@ -55,9 +56,13 @@ def player_info():
 @app.route('/API/bot/request/', methods=["POST"])
 def bot_command():
     try:
+        if not request.content_type == 'application/json':
+            bot.logger.info(f"Bad Request from {request.remote_addr}: Content-type {request.content_type} is invalid")
+            return json.dumps({'failed': 'Content-type must be application/json'}), 400, {'ContentType': 'application/json'}
         data = request.get_json(force=True)
         bot.logger.info(f"API Request: {request.path} => {data}")
         if 'authkey' not in data or 'cmd' not in data or 'user_id' not in data or 'args' not in data:
+            bot.logger.info(f"Bad Request from {request.remote_addr}: ")
             return json.dumps({'success': False}), 400, {'ContentType': 'application/json'}
 
         if web_api_auth_key == data['authkey']:
