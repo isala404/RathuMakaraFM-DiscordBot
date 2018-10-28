@@ -52,20 +52,23 @@ def user_info():
         if not request.content_type == 'application/json':
             bot.logger.info(f"Bad Request from {request.remote_addr}: Content-type {request.content_type} is invalid")
 
-            return json.dumps({'failed': 'Content-type must be application/json'}), 400, {
+            return json.dumps({'error': 'Content-type must be application/json'}), 400, {
                 'ContentType': 'application/json'}
 
         data = request.get_json(force=True)
         bot.logger.info(f"API Request: {request.path} => {data}")
 
-        if web_api_auth_key != data['authkey']:
-            return json.dumps({'success': False}), 401, {'ContentType': 'application/json'}
-
         if 'authkey' not in data or 'user_id' not in data:
             bot.logger.info(f"Bad Request from {request.remote_addr}: Missing some key attributes")
-            return json.dumps({'success': False}), 400, {'ContentType': 'application/json'}
+            return json.dumps({'error': 'Missing key attributes'}), 400, {'ContentType': 'application/json'}
 
-        user = bot.get_user(bot.get_user(int(data['user_id'])))
+        if web_api_auth_key != data['authkey']:
+            return json.dumps({'error': 'Invalid Auth Key'}), 401, {'ContentType': 'application/json'}
+
+        user = bot.get_user(int(data['user_id']))
+        if not user:
+            return json.dumps({'error': 'User was not found'}), 401, {'ContentType': 'application/json'}
+
         d = {
             'name': user.name,
             'roles': user.roles,
@@ -80,14 +83,13 @@ def user_info():
     except Exception as e:
         bot.logger.error("Error While Processing a API Request")
         bot.logger.exception(e)
-        return json.dumps({'success': False}), 400, {'ContentType': 'application/json'}
+        return json.dumps({'error': 'Internal Server Error'}), 400, {'ContentType': 'application/json'}
 
 
 @app.route('/API/bot/request/', methods=["POST"])
 def bot_command():
     try:
         if not request.content_type == 'application/json':
-
             bot.logger.info(f"Bad Request from {request.remote_addr}: Content-type {request.content_type} is invalid")
 
             return json.dumps({'failed': 'Content-type must be application/json'}), 400, {
@@ -99,14 +101,14 @@ def bot_command():
 
         if 'authkey' not in data or 'cmd' not in data or 'user_id' not in data or 'args' not in data:
             bot.logger.info(f"Bad Request from {request.remote_addr}: Missing some key attributes")
-            return json.dumps({'success': False}), 400, {'ContentType': 'application/json'}
+            return json.dumps({'error': 'Missing key attributes'}), 400, {'ContentType': 'application/json'}
 
         if web_api_auth_key == data['authkey']:
-            return json.dumps({'success': False}), 401, {'ContentType': 'application/json'}
+            return json.dumps({'error': 'Invalid Auth Key'}), 401, {'ContentType': 'application/json'}
 
         if data['cmd'] != "request" and not [y.id for y in bot.get_user(int(data['user_id'])).roles if
                                              y.id in bot_commanders]:
-            return json.dumps({'success': False}), 401, {'ContentType': 'application/json'}
+            return json.dumps({'error': 'User Don\'t have permission for this action'}), 401, {'ContentType': 'application/json'}
 
         result = asyncio.run_coroutine_threadsafe(
             parse_cmd(data['cmd'], data['args'], bot.get_user(int(data['user_id']))), bot.loop)
@@ -114,11 +116,10 @@ def bot_command():
         if result.result():
             return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
-
     except Exception as e:
         bot.logger.error("Error While Processing a API Request")
         bot.logger.exception(e)
-        return json.dumps({'success': False}), 400, {'ContentType': 'application/json'}
+        return json.dumps({'error': 'Internal Server Error'}), 400, {'ContentType': 'application/json'}
 
 
 async def parse_cmd(cmd, args, author):
