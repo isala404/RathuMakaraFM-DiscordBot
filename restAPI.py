@@ -112,7 +112,7 @@ def bot_command():
             bot.logger.info(f"Bad Request from {request.remote_addr}: Missing some key attributes")
             return json.dumps({'error': 'Missing key attributes'}), 400, {'ContentType': 'application/json'}
 
-        if web_api_auth_key == data['authkey']:
+        if web_api_auth_key != data['authkey']:
             return json.dumps({'error': 'Invalid Auth Key'}), 401, {'ContentType': 'application/json'}
 
         user = bot.get_user(int(data['user_id']))
@@ -144,37 +144,37 @@ def bot_command():
 
 async def parse_cmd(cmd, args, author):
     if cmd == 'play':
-        result = await bot.cmd_play(args, None, download=True, author=author)
+        result = await bot.cmd_play(args, download=True, author=author)
 
     elif cmd == 'playnow':
-        result = await bot.cmd_play(args, None, download=False, play_now=True, author=author)
+        result = await bot.cmd_play(args, download=False, play_now=True, author=author)
 
     elif cmd == 'playlist':
-        result = await bot.cmd_play(args, None, playlist=True, author=author)
+        result = await bot.cmd_play(args, playlist=True, author=author)
 
     elif cmd == 'volume':
-        result = await bot.cmd_volume(args)
+        result = await bot.cmd_volume(args, author=author)
 
     elif cmd == 'skip':
-        result = await bot.cmd_skip()
+        result = await bot.cmd_skip(author=author)
 
     elif cmd == 'pause':
-        result = await bot.cmd_pause()
+        result = await bot.cmd_pause(author=author)
 
     elif cmd == 'resume':
-        result = await bot.cmd_resume()
+        result = await bot.cmd_resume(author=author)
 
     elif cmd == 'clearQueue':
-        result = await bot.cmd_clear_queue()
+        result = await bot.cmd_clear_queue(author=author)
 
     elif cmd == 'stream':
         result = await bot.cmd_play(args, None, author=author)
 
     elif cmd == 'remove' or cmd == 'rm':
-        result = await bot.cmd_remove_from_queue(args)
+        result = await bot.cmd_remove_from_queue(args, author=author)
 
     elif cmd == 'move' or cmd == 'm':
-        result = await bot.cmd_move_song(args)
+        result = await bot.cmd_move_song(args, author=author)
 
     elif cmd == 'request' or cmd == 'req':
         result = await bot.cmd_request(args, None, author=author)

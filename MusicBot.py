@@ -74,7 +74,7 @@ class MusicBot(discord.Client):
                     )
                     self.logger.info(
                         f"{user.name} accepted {request.requester.name}'s Request to play {request.song_webpage_url}")
-                    await self.cmd_play(request.song_webpage_url, None, author=request.requester)
+                    await self.cmd_play(request.song_webpage_url, author=request.requester)
                     self.MusicPlayer.request_queue.remove(request)
                     await reaction.message.delete()
                 elif reaction.emoji == '❌':
@@ -112,13 +112,13 @@ class MusicBot(discord.Client):
             await self.cmd_hello(message)
 
         elif cmd == 'play' or cmd == 'p':
-            await self.cmd_play(args, message, download=True)
+            await self.cmd_play(args, download=True, author=message.author)
 
         elif cmd == 'playnow':
-            await self.cmd_play(args, message, download=False, play_now=True)
+            await self.cmd_play(args, download=False, play_now=True, author=message.author)
 
         elif cmd == 'playlist':
-            await self.cmd_play(args, message, playlist=True)
+            await self.cmd_play(args, playlist=True, author=message.author)
 
         elif cmd == 'join':
             await self.join(message.author.voice.channel)
@@ -155,12 +155,13 @@ class MusicBot(discord.Client):
             await self.cmd_request(args, message)
 
         elif cmd == 'autoplay' or cmd == 'ap':
-            await self.cmd_autoplay(args, message)
+            await self.cmd_autoplay(args, message.author)
 
         elif cmd == 'reset':
             await self.cmd_reset()
 
         elif cmd == 'leave' or cmd == 'fuckoff':
+
             self.logger.info("Bot is disconnecting")
             if self.voice_client and self.voice_client.is_connected():
                 await self.voice_client.disconnect()
@@ -183,96 +184,123 @@ class MusicBot(discord.Client):
         self.MusicPlayer.song_request_queue_channel = self.get_channel(song_request_queue_channel)
         self.MusicPlayer.playlist_queue_channel = self.get_channel(playlist_queue_channel)
 
-    async def cmd_play(self, url, message, download=False, playlist=False, author=None, play_now=False):
+    async def cmd_play(self, url, download=False, playlist=False, author=None, play_now=False):
         if self.voice_client is None:
             await self.auto_join()
 
         if url.strip() == '' or not url:
             if not self.MusicPlayer.is_playing():
                 await self.cmd_resume()
+                return True
+            return False
+
+        if not author:
             return False
 
         if 'www.podcasts.com' in url:
-            song = await Song.podcast(url, message, self)
+            song = await Song.podcast(url, author, self)
         elif play_now:
-            song = await Song.stream(url, message, self)
-        elif not message:
-            song = await Song.download(url, None, self, author=author)
-            await self.MusicPlayer.add(song, None)
-            return True
+            song = await Song.stream(url, author, self)
         elif download and not playlist:
-            song = await Song.download(url, message, self)
+            song = await Song.download(url, author, self)
         elif playlist:
-            song = await Song.download(url, message, self, playlist=playlist)
+            song = await Song.download(url, author, self, playlist=playlist)
         elif not download:
-            song = await Song.stream(url, message, self)
+            song = await Song.stream(url, author, self)
         else:
-            song = await Song.download(url, message, self)
+            song = await Song.download(url, author, self)
 
         if playlist:
             return True
 
         if song and not play_now:
-            await self.MusicPlayer.add(song, message.channel)
+            await self.MusicPlayer.add(song)
             return True
         elif song and play_now:
-            await self.MusicPlayer.add(song, message.channel, play_now=True)
+            await self.MusicPlayer.add(song, play_now=True)
             await self.cmd_skip()
             return True
         else:
             self.logger.warning(f"Can't play or find {url}")
-            await message.channel.send(
-                "{0.author.mention} I couldn't find that song :disappointed_relieved:".format(message))
+            await self.MusicPlayer.bot_cmd_channel.send(
+                "{} I couldn't find that song :disappointed_relieved:".format(author.mention))
             return False
 
-    async def cmd_volume(self, volume):
+    async def cmd_volume(self, volume, author=None):
         if not volume.isdigit():
-            await self.MusicPlayer.bot_cmd_channel.send(":no_entry: Sound level is not given")
-            return
+            if not author:
+                await self.MusicPlayer.bot_cmd_channel.send(":no_entry: Sound level is not given")
+            else:
+                await self.MusicPlayer.bot_cmd_channel.send(f"{author.mention} :no_entry: Sound level is not given")
+            return False
+
         volume = int(volume)
         if self.MusicPlayer.volume * 100 > volume:
             for i in range(round(self.MusicPlayer.volume * 100), volume - 1, -1):
                 self.MusicPlayer.set_volume(i)
                 await asyncio.sleep(.01)
-            await self.MusicPlayer.bot_cmd_channel.send(f":sound: Volume is set to {volume}")
+            if not author:
+                await self.MusicPlayer.bot_cmd_channel.send(f":sound: Volume is set to {volume}")
+            else:
+                await self.MusicPlayer.bot_cmd_channel.send(f":sound: Volume is set to {volume} by {author.mention}")
         else:
             for i in range(round(self.MusicPlayer.volume * 100), volume + 1):
                 self.MusicPlayer.set_volume(i)
                 await asyncio.sleep(.01)
-            await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to {volume}")
+            if not author:
+                await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to {volume}")
+            else:
+                await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to by {author.mention}")
 
-    async def cmd_skip(self):
+    async def cmd_skip(self, author=None):
         if self.MusicPlayer.is_playing() and self.MusicPlayer.current:
             self.MusicPlayer.skip()
-            await self.MusicPlayer.bot_cmd_channel.send(f":track_next: Skipping {self.MusicPlayer.current.song_name}")
+            if not author:
+                await self.MusicPlayer.bot_cmd_channel.send(f":track_next: Skipping {self.MusicPlayer.current.song_name}")
+            else:
+                await self.MusicPlayer.bot_cmd_channel.send(f":track_next: Skipping {self.MusicPlayer.current.song_name} by {author.name} from Web Dashboard")
             return True
 
-    async def cmd_pause(self):
+    async def cmd_pause(self, author=None):
         self.MusicPlayer.pause()
-        await self.MusicPlayer.bot_cmd_channel.send(":pause_button: Paused")
+        if not author:
+            await self.MusicPlayer.bot_cmd_channel.send(":pause_button: Paused")
+        else:
+            await self.MusicPlayer.bot_cmd_channel.send(f":pause_button: Paused by {author.name} from Web Dashboard")
         return True
 
-    async def cmd_resume(self):
-        await self.MusicPlayer.bot_cmd_channel.send(":arrow_forward: Resuming")
+    async def cmd_resume(self, author=None):
+        if not author:
+            await self.MusicPlayer.bot_cmd_channel.send(":arrow_forward: Resuming")
+        else:
+            await self.MusicPlayer.bot_cmd_channel.send(f":arrow_forward: Resuming by {author.name} from Web Dashboard")
         self.MusicPlayer.resume()
         return True
 
-    async def cmd_clear_queue(self):
+    async def cmd_clear_queue(self, author=None):
         self.logger.warning("Playlist was Cleared")
         self.MusicPlayer.clear()
-        await self.MusicPlayer.bot_cmd_channel.send(":boom: Queue was Cleared :boom:")
+        if not author:
+            await self.MusicPlayer.bot_cmd_channel.send(":boom: Queue was Cleared")
+        else:
+            await self.MusicPlayer.bot_cmd_channel.send(f":boom: Queue was Cleared by {author.name} from Web Dashboard")
+
         return True
 
-    async def cmd_remove_from_queue(self, index):
+    async def cmd_remove_from_queue(self, index, author=None):
         if index.isdigit() and len(self.MusicPlayer.queue) >= int(index):
             index = int(index) - 1
-            await self.MusicPlayer.bot_cmd_channel.send(
-                f":boom: {self.MusicPlayer.queue[index].song_name} was Removed")
+            if not author:
+                await self.MusicPlayer.bot_cmd_channel.send(
+                    f":boom: {self.MusicPlayer.queue[index].song_name} was Removed")
+            else:
+                await self.MusicPlayer.bot_cmd_channel.send(
+                    f":boom: {self.MusicPlayer.queue[index].song_name} was Removed by {author.name} from Web Dashboard")
             del self.MusicPlayer.queue[index]
             return True
         return False
 
-    async def cmd_move_song(self, arg):
+    async def cmd_move_song(self, arg, author=None):
         if len(arg.split(" ")) == 2:
             current, new = arg.split(" ")
         else:
@@ -287,18 +315,30 @@ class MusicBot(discord.Client):
                 new = int(new)
                 song = self.MusicPlayer.queue.pop(current - 1)
                 self.MusicPlayer.queue.insert(new - 1, song)
-                if current > new:
-                    await self.MusicPlayer.bot_cmd_channel.send(
-                        f":arrow_up_small:  {song.song_name} was Moved #{new}")
+                if not author:
+                    if current > new:
+                        await self.MusicPlayer.bot_cmd_channel.send(
+                            f":arrow_up_small:  {song.song_name} was Moved #{new}")
+                    else:
+                        await self.MusicPlayer.bot_cmd_channel.send(
+                            f":arrow_down_small: {song.song_name} was Moved #{new}")
                 else:
-                    await self.MusicPlayer.bot_cmd_channel.send(
-                        f":arrow_down_small: {song.song_name} was Moved #{new}")
+                    if current > new:
+                        await self.MusicPlayer.bot_cmd_channel.send(
+                            f":arrow_up_small:  {song.song_name} was Moved #{new} by {author.name} from Web Dashboard")
+                    else:
+                        await self.MusicPlayer.bot_cmd_channel.send(
+                            f":arrow_down_small: {song.song_name} was Moved #{new} by {author.name} from Web Dashboard")
 
             else:
                 song = self.MusicPlayer.queue.pop(current - 1)
                 self.MusicPlayer.queue.insert(0, song)
-                await self.MusicPlayer.bot_cmd_channel.send(
-                    f":arrow_double_up: {song.song_name} was Moved to the Top of the Queue")
+                if not author:
+                    await self.MusicPlayer.bot_cmd_channel.send(
+                        f":arrow_double_up: {song.song_name} was Moved to the Top of the Queue")
+                else:
+                    await self.MusicPlayer.bot_cmd_channel.send(
+                        f":arrow_double_up: {song.song_name} was Moved to the Top of the Queue by {author.name} from Web Dashboard")
             return True
 
     async def cmd_request(self, arg, message, author=None):
@@ -309,16 +349,16 @@ class MusicBot(discord.Client):
         elif author:
             await Song.search(arg, None, self, author=author)
 
-    async def cmd_autoplay(self, arg, message):
+    async def cmd_autoplay(self, arg, author):
         if arg == 'on':
             self.MusicPlayer.autoplay = True
-            self.logger.info(f"AutoPlay was Enabled by {message.author.name}")
-            await message.channel.send("AutoPlay is Now Enabled")
+            self.logger.info(f"AutoPlay was Enabled by {author.name}")
+            await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Enabled by {author.name} from Web Dashboard")
 
         elif arg == 'off':
             self.MusicPlayer.autoplay = False
-            self.logger.info(f"AutoPlay was Disabled by {message.author.name}")
-            await message.channel.send("AutoPlay is Now Disabled")
+            self.logger.info(f"AutoPlay was Disabled by {author.name}")
+            await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Disabled by {author.name} from Web Dashboard")
         else:
             return False
 
@@ -348,16 +388,5 @@ def start_logger():
 
 
 if __name__ == "__main__":
-    bot = None
-    try:
-        bot = MusicBot()
-        bot.run(bot_auth_key)
-    except InterruptedError:
-        if bot:
-            bot.logger.info("Shutting Down")
-        exit()
-    except Exception as e:
-        log = start_logger()
-        log.critical("Something Really Went Wrong")
-        log.exception(e)
-        os.system("/root/Musicbot.sh")
+    bot = MusicBot()
+    bot.run(bot_auth_key)

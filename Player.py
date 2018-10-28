@@ -96,17 +96,16 @@ class MusicPlayer:
         self.play_next_song = True
         self.is_pause = False
 
-    async def add(self, song, channel=None, play_now=False):
+    async def add(self, song, play_now=False):
         if play_now:
             self.queue.insert(0, song)
         else:
-            if len(self.queue) >= 20 and channel and song.requester:
-                await channel.send(f"{song.requester.mention} Queue is full, try again in bit :x: ")
-                return
+            if len(self.queue) >= 20 and song.requester:
+                await self.bot_cmd_channel.send(f"<{song.requester.mention}> Queue is full, try again in bit :x: ")
+                return False
             self.queue.append(song)
-        if channel:
-            await channel.send(
-                f':white_check_mark: {song.song_name} by {song.song_uploader} was added to the queue\n{song.song_webpage_url}')
+        await self.bot_cmd_channel.send(
+            f':white_check_mark: {song.song_name} by {song.song_uploader} was added to the queue\n<{song.song_webpage_url}> by {song.requester.name}')
 
     async def request(self, song):
         song.user_request = await self.song_request_queue_channel.send(
@@ -141,7 +140,7 @@ class MusicPlayer:
                 # Some kind of a weird bug in after argument require to pass toggle like this
                 try:
                     self.voice.play(self.current,
-                                    after=lambda e: self.toggle_play_next_song() if e else self.toggle_play_next_song())
+                                    after=lambda e_: self.toggle_play_next_song() if e_ else self.toggle_play_next_song())
                 except Exception as e:
                     self.bot.logger.critical(f"Can't Play {self.current.song_webpage_url}")
                     self.bot.logger.exception(e)
@@ -173,7 +172,7 @@ class Song(discord.PCMVolumeTransformer):
         self.update_metadata(data)
 
     @classmethod
-    async def stream(cls, url, message, bot):
+    async def stream(cls, url, author, bot):
         loop = bot.loop or asyncio.get_event_loop()
         # noinspection PyBroadException
         try:
@@ -185,44 +184,45 @@ class Song(discord.PCMVolumeTransformer):
 
         if 'entries' in data:
             data = data['entries'][0]
-        data['requester'] = message.author
+
+        data['requester'] = author
 
         return cls(discord.FFmpegPCMAudio(data['url'], **ffmpeg_options), data=data)
 
     @classmethod
-    async def download(cls, url, message, bot, playlist=False, author=None):
+    async def download(cls, url, author, bot, playlist=False):
         loop = bot.loop or asyncio.get_event_loop()
         bot.logger.info(f"Downloading {url}")
         try:
-            if playlist and message:
-                await message.channel.send(':robot: I am Processing the Playlist this may take few minutes')
+            if playlist:
+                await bot.MusicPlayer.bot_cmd_channel.send(
+                    ':robot: I am Processing the Playlist this may take few minutes')
             data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=True))
         except Exception as e:
             bot.logger.error(f"Error While Downloading {url}")
             bot.logger.exception(e)
             return None
 
-        if playlist and 'entries' in data and data['entries'][0]['playlist'] != '' and message:
+        if playlist and 'entries' in data and data['entries'][0]['playlist'] != '':
             shuffle(data['entries'])
             for entry in data['entries']:
-                entry['requester'] = message.author
+                entry['requester'] = author
                 entry['path'] = ytdl.prepare_filename(entry)
-                await bot.MusicPlayer.add(cls(discord.FFmpegPCMAudio(entry['url'], **ffmpeg_options), data=entry),
-                                          message.channel)
+                a = await bot.MusicPlayer.add(cls(discord.FFmpegPCMAudio(entry['url'], **ffmpeg_options), data=entry))
+                if not a:
+                    return True
             return True
 
         if 'entries' in data:
             data = data['entries'][0]
-        if message:
-            data['requester'] = message.author
-        else:
-            data['requester'] = author
+
+        data['requester'] = author
         data['path'] = ytdl.prepare_filename(data)
 
         return cls(discord.FFmpegPCMAudio(data['path'], **ffmpeg_options), data=data)
 
     @classmethod
-    async def podcast(cls, url, message, bot):
+    async def podcast(cls, url, author, bot):
         try:
             data = {'title': None, 'thumbnail': None, 'webpage_url': url, 'url': None, 'extractor': 'Podcasts',
                     'uploader': 'Rathumakara FM'}
@@ -236,7 +236,7 @@ class Song(discord.PCMVolumeTransformer):
                 return None
             data['url'] = 'http://www.podcasts.com' + audio_file
             data['title'] = r.html.find('#episode_title', first=True).find('h2', first=True).text
-            data['requester'] = message.author
+            data['requester'] = author
 
             for i in r.html.find('p'):
                 if 'Podcast by ' in i.text:
