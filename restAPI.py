@@ -57,6 +57,9 @@ def bot_command():
     try:
         data = request.get_json(force=True)
         bot.logger.info(f"API Request: {request.path} => {data}")
+        if 'authkey' not in data or 'cmd' not in data or 'user_id' not in data or 'args' not in data:
+            return json.dumps({'success': False}), 400, {'ContentType': 'application/json'}
+
         if web_api_auth_key == data['authkey']:
 
             if data['cmd'] != "request" and not [y.id for y in bot.get_user(int(data['user_id'])).roles if y.id in bot_commanders]:
