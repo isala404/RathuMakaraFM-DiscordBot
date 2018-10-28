@@ -71,7 +71,7 @@ def user_info():
 
         d = {
             'name': user.name,
-            'roles': user.roles,
+            'roles': [y.id for y in user.roles],
             'is_bot': user.bot,
             'dm_channel': user.dm_channel,
             'created_at': user.created_at,
