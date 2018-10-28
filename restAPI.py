@@ -9,16 +9,7 @@ bot = MusicBot()
 app = Flask(__name__)
 
 
-# @app.before_first_request
-# def activate_job():
-#     def run_job():
-#         bot.run(auth_key)
-#
-#     thread = threading.Thread(target=run_job)
-#     thread.start()
-
-
-@app.route('/API/bot/get/player')
+@app.route('/API/bot/get/player/')
 def player_info():
     bot.logger.info(f"API Request for {request.path} from {request.remote_addr}")
     if bot and bot.MusicPlayer:
@@ -53,38 +44,84 @@ def player_info():
     return jsonify(d)
 
 
+@app.route('/API/bot/get/user/', methods=["POST"])
+def user_info():
+    try:
+        bot.logger.info(f"API Request for {request.path} from {request.remote_addr}")
+
+        if not request.content_type == 'application/json':
+            bot.logger.info(f"Bad Request from {request.remote_addr}: Content-type {request.content_type} is invalid")
+
+            return json.dumps({'failed': 'Content-type must be application/json'}), 400, {
+                'ContentType': 'application/json'}
+
+        data = request.get_json(force=True)
+        bot.logger.info(f"API Request: {request.path} => {data}")
+
+        if web_api_auth_key != data['authkey']:
+            return json.dumps({'success': False}), 401, {'ContentType': 'application/json'}
+
+        if 'authkey' not in data or 'user_id' not in data:
+            bot.logger.info(f"Bad Request from {request.remote_addr}: Missing some key attributes")
+            return json.dumps({'success': False}), 400, {'ContentType': 'application/json'}
+
+        user = bot.get_user(bot.get_user(int(data['user_id'])))
+        d = {
+            'name': user.name,
+            'roles': user.roles,
+            'is_bot': user.bot,
+            'dm_channel': user.dm_channel,
+            'created_at': user.created_at,
+            'default_avatar_url': user.default_avatar_url,
+            'is_blocked': user.is_blocked()
+        }
+        return jsonify(d)
+
+    except Exception as e:
+        bot.logger.error("Error While Processing a API Request")
+        bot.logger.exception(e)
+        return json.dumps({'success': False}), 400, {'ContentType': 'application/json'}
+
+
 @app.route('/API/bot/request/', methods=["POST"])
 def bot_command():
     try:
         if not request.content_type == 'application/json':
+
             bot.logger.info(f"Bad Request from {request.remote_addr}: Content-type {request.content_type} is invalid")
-            return json.dumps({'failed': 'Content-type must be application/json'}), 400, {'ContentType': 'application/json'}
+
+            return json.dumps({'failed': 'Content-type must be application/json'}), 400, {
+                'ContentType': 'application/json'}
+
         data = request.get_json(force=True)
+
         bot.logger.info(f"API Request: {request.path} => {data}")
+
         if 'authkey' not in data or 'cmd' not in data or 'user_id' not in data or 'args' not in data:
-            bot.logger.info(f"Bad Request from {request.remote_addr}: ")
+            bot.logger.info(f"Bad Request from {request.remote_addr}: Missing some key attributes")
             return json.dumps({'success': False}), 400, {'ContentType': 'application/json'}
 
         if web_api_auth_key == data['authkey']:
+            return json.dumps({'success': False}), 401, {'ContentType': 'application/json'}
 
-            if data['cmd'] != "request" and not [y.id for y in bot.get_user(int(data['user_id'])).roles if y.id in bot_commanders]:
-                return json.dumps({'success': False}), 401, {'ContentType': 'application/json'}
+        if data['cmd'] != "request" and not [y.id for y in bot.get_user(int(data['user_id'])).roles if
+                                             y.id in bot_commanders]:
+            return json.dumps({'success': False}), 401, {'ContentType': 'application/json'}
 
-            result = asyncio.run_coroutine_threadsafe(parse_cmd(data['cmd'], data['args'], bot.get_user(int(data['user_id']))), bot.loop)
-            if result.result():
-                return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
-        return json.dumps({'success': False}), 400, {'ContentType': 'application/json'}
+        result = asyncio.run_coroutine_threadsafe(
+            parse_cmd(data['cmd'], data['args'], bot.get_user(int(data['user_id']))), bot.loop)
+
+        if result.result():
+            return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
+
 
     except Exception as e:
-        bot.logger.error(f"Error While Processing a API Request")
-        if request.form:
-            bot.logger.error(str(request.form))
+        bot.logger.error("Error While Processing a API Request")
         bot.logger.exception(e)
         return json.dumps({'success': False}), 400, {'ContentType': 'application/json'}
 
 
 async def parse_cmd(cmd, args, author):
-
     if cmd == 'play':
         result = await bot.cmd_play(args, None, download=True, author=author)
 
@@ -121,12 +158,15 @@ async def parse_cmd(cmd, args, author):
     elif cmd == 'request' or cmd == 'req':
         result = await bot.cmd_request(args, None, author=author)
     else:
-        return  False
+        return False
     return result
+
 
 if __name__ == "__main__":
     def start_server():
         app.run(host=web_api_ip)
+
+
     thread = threading.Thread(target=start_server)
     thread.start()
     bot.run(bot_auth_key)
