@@ -133,6 +133,7 @@ async def embed_for_nowplaying(bot):
                         bot.logger.info(f"Queue is empty, Auto Playing: {song}")
                         await player.bot.cmd_play(song, download=False, author=player.bot.user)
                     else:
+                        await player.bot.change_presence(status=discord.Status.do_not_disturb, activity=None)
                         bot.logger.warning(
                             f"Bot Hit a Idle status\nqueue = {player.queue}, is_pause = {player.is_pause}, play_next_song = {player.play_next_song}, current = {player.current}")
                         bot.logger.warning("Restarting Bot")
