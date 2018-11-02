@@ -6,6 +6,7 @@ import re
 from difflib import SequenceMatcher
 from requests_html import AsyncHTMLSession, HTMLSession
 from random import shuffle
+from utils import song_added_embed
 
 asession = AsyncHTMLSession()
 session = HTMLSession()
@@ -53,6 +54,7 @@ class MusicPlayer:
         self.auto_playlist = []
         self.is_pause = False
         self.autoplay = True
+        self.queue_length = 0
 
     def is_playing(self):
         return self.voice.is_playing()
@@ -104,8 +106,7 @@ class MusicPlayer:
                 await self.bot_cmd_channel.send(f"<{song.requester.mention}> Queue is full, try again in bit :x: ")
                 return False
             self.queue.append(song)
-        await self.bot_cmd_channel.send(
-            f':white_check_mark: {song.song_name} by {song.song_uploader} was added to the queue\n<{song.song_webpage_url}> by {song.requester.name}')
+        await self.bot_cmd_channel.send(embed=song_added_embed(self.bot, song))
 
     async def request(self, song):
         song.user_request = await self.song_request_queue_channel.send(
@@ -168,6 +169,7 @@ class Song(discord.PCMVolumeTransformer):
         self.requester = None
         self.song_webpage_url = None
         self.user_request = None
+        self.video_name = None
         self.song_progress = 0
         self.update_metadata(data)
 
@@ -279,10 +281,8 @@ class Song(discord.PCMVolumeTransformer):
 
     def update_metadata(self, data):
         if 'title' in data.keys() and 'uploader' in data.keys():
+            self.video_name = data['title']
             self.song_name, self.song_uploader = extract_song_artist_title(data['title'], data['uploader'])
-
-        if 'name' in data.keys() and 'title' not in data.keys():
-            self.song_name = data['name']
 
         if 'thumbnail' in data.keys():
             self.song_thumbnail = data['thumbnail']

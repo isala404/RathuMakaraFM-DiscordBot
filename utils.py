@@ -135,6 +135,9 @@ async def embed_for_nowplaying(bot):
                         continue
 
             try:
+                embed.set_footer(text="bot by @mrsupiri",
+                                 icon_url="https://cdn2.iconfinder.com/data/icons/minimalism/512/twitter.png")
+
                 if bot.now_playing_msg is None:
                     bot.now_playing_msg = await bot.MusicPlayer.player_channel.send(embed=embed)
                 else:
@@ -233,3 +236,34 @@ async def stream_logs(filename, bot):
         if p.poll(1):
             await bot.get_channel(bot_log_channel).send(f"```py\n{f.stdout.readline().decode().strip()}```")
         await asyncio.sleep(1)
+
+
+async def song_added_embed(bot, song):
+    try:
+        player = bot.player
+        embed = discord.Embed(title=f"{song.video_name}", colour=discord.Colour(0x5ddefc),
+                              url=f"{song.song_webpage_url}")
+
+        embed.set_thumbnail(url=f"{song.song_thumbnail}")
+
+        embed.set_author(name=f"{song.requester}", url="http://isala.me",
+                         icon_url=f"{song.requester.avatar_url}")
+
+        queue_length = 0
+        for song in player.queue:
+            queue_length += song.song_duration
+
+        player.queue_length = queue_length
+
+        embed.add_field(name="By", value=f"{song.song_uploader}")
+        embed.add_field(name="Song Duration", value=f"{song.song_duration}")
+
+        if player.queue:
+            embed.add_field(name="Estimated time until playing", value=f"{queue_length + player.progress()}")
+            embed.add_field(name="Position in queue", value=f"{len(player.queue)}")
+
+        return embed
+    except Exception as e:
+        bot.logger.error("Error Creating Song Added Embed")
+        bot.logger.exception(e)
+        return None
