@@ -360,16 +360,16 @@ class MusicBot(discord.Client):
         elif author:
             await Song.search(arg, None, self, author=author)
 
-    async def cmd_autoplay(self, arg, author):
+    async def cmd_autoplay(self, arg):
         if arg == 'on':
             self.MusicPlayer.autoplay = True
             self.logger.info(f"AutoPlay was Enabled by {author.name}")
-            await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Enabled by {author.name} from Web Dashboard")
+            await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Enabled by {author.name}")
 
         elif arg == 'off':
             self.MusicPlayer.autoplay = False
             self.logger.info(f"AutoPlay was Disabled by {author.name}")
-            await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Disabled by {author.name} from Web Dashboard")
+            await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Disabled by {author.name}")
         else:
             return False
 

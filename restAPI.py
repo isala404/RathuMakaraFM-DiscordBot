@@ -149,6 +149,9 @@ async def parse_cmd(cmd, args, author):
     elif cmd == 'playnow':
         result = await bot.cmd_play(args, download=False, play_now=True, author=author)
 
+    elif cmd == 'playnext':
+        result = await bot.cmd_play(args, download=False, play_next=True, author=author)
+
     elif cmd == 'playlist':
         result = await bot.cmd_play(args, playlist=True, author=author)
 

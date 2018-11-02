@@ -94,7 +94,7 @@ class MusicPlayer:
             self.bot.logger.warning("Player Progress is called without a song")
             return 0
 
-    def toggle_play_next_song(self):
+    def toggle_next(self):
         self.play_next_song = True
         self.is_pause = False
 
@@ -139,7 +139,7 @@ class MusicPlayer:
 
                 try:
                     if self.current.user_request:
-                        self.song_request_channel.send(
+                        await self.song_request_channel.send(
                             f"Now Playing {self.current.requester.mention}'s Request\n{self.current.song_name} by {self.current.song_uploader}")
                 except Exception as e:
                     self.bot.logger.error("Error while mentioning requested user")
@@ -148,7 +148,7 @@ class MusicPlayer:
                 # Some kind of a weird bug in after argument require to pass toggle like this
                 try:
                     self.voice.play(self.current,
-                                    after=lambda e_: self.toggle_play_next_song() if e_ else self.toggle_play_next_song())
+                                    after=lambda e_: self.toggle_next() if e_ else self.toggle_next())
                 except Exception as e:
                     self.bot.logger.critical(f"Can't Play {self.current.song_webpage_url}")
                     self.bot.logger.exception(e)
