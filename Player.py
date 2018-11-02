@@ -140,7 +140,7 @@ class MusicPlayer:
                 try:
                     if self.current.user_request:
                         await self.song_request_channel.send(
-                            f"Now Playing {self.current.requester.mention}'s Request\n{self.current.song_name} by {self.current.song_uploader}")
+                            f"Now Playing {self.current.requester.mention}'s Request\n{self.current.song_name} by {self.current.song_uploader}\n<{self.current.song_webpage_url}>")
                 except Exception as e:
                     self.bot.logger.error("Error while mentioning requested user")
                     self.bot.logger.exception(e)

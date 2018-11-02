@@ -158,7 +158,7 @@ class MusicBot(discord.Client):
             await self.cmd_request(args, message)
 
         elif cmd == 'autoplay' or cmd == 'ap':
-            await self.cmd_autoplay(args, message.author)
+            await self.cmd_autoplay(args)
 
         elif cmd == 'reset':
             await self.cmd_reset()
