@@ -247,7 +247,7 @@ async def stream_logs(filename, bot):
         await asyncio.sleep(1)
 
 
-def song_added_embed(bot, song):
+def song_added_embed(bot, song, play_now):
     try:
         player = bot.MusicPlayer
         embed = discord.Embed(title=f"{song.video_name}", colour=discord.Colour(0x5ddefc),
@@ -270,7 +270,10 @@ def song_added_embed(bot, song):
 
         if player.queue:
             embed.add_field(name="Estimated time until playing", value=f"{format_time(eta)}")
-            embed.add_field(name="Position in queue", value=f"{len(player.queue)}")
+            if play_now:
+                embed.add_field(name="Position in queue", value="1")
+            else:
+                embed.add_field(name="Position in queue", value=f"{len(player.queue)}")
 
         return embed
     except Exception as e:

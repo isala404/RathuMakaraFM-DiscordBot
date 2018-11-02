@@ -106,7 +106,7 @@ class MusicPlayer:
                 await self.bot_cmd_channel.send(f"<{song.requester.mention}> Queue is full, try again in bit :x: ")
                 return False
             self.queue.append(song)
-        await self.bot_cmd_channel.send(embed=song_added_embed(self.bot, song))
+        await self.bot_cmd_channel.send(embed=song_added_embed(self.bot, song, play_now))
 
     async def request(self, song):
         song.user_request = await self.song_request_queue_channel.send(
