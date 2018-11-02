@@ -253,11 +253,15 @@ class MusicBot(discord.Client):
                 await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to by {author.mention} from Web Dashboard")
 
     async def cmd_skip(self, author=None):
+        up_next = ""
+        if self.MusicPlayer.queue:
+            up_next = f"\n:play_pause: {self.MusicPlayer.queue[0].song_name} by {self.MusicPlayer.queue[0].song_uploader}"
         self.MusicPlayer.skip()
         if not author:
-            await self.MusicPlayer.bot_cmd_channel.send(f":track_next: Skipping {self.MusicPlayer.current.song_name}")
+            await self.MusicPlayer.bot_cmd_channel.send(f":track_next: Skipping {self.MusicPlayer.current.song_name}"+up_next)
         else:
-            await self.MusicPlayer.bot_cmd_channel.send(f":track_next: Skipping {self.MusicPlayer.current.song_name} by {author.name} from Web Dashboard")
+            await self.MusicPlayer.bot_cmd_channel.send(f":track_next: Skipping {self.MusicPlayer.current.song_name} by {author.name} from Web Dashboard"+up_next)
+        self.MusicPlayer.skip()
         return True
 
     async def cmd_pause(self, author=None):

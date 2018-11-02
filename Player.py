@@ -179,6 +179,7 @@ class Song(discord.PCMVolumeTransformer):
         self.user_request = None
         self.video_name = None
         self.song_progress = 0
+        self.is_a_request = False
         self.update_metadata(data)
 
     @classmethod
@@ -324,7 +325,7 @@ class Song(discord.PCMVolumeTransformer):
             self.requester = data['requester']
 
         if 'is_a_request' in data.keys():
-            self.user_request = data['is_a_request']
+            self.is_a_request = data['is_a_request']
 
 
 def extract_song_artist_title(name, artist):
