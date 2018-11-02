@@ -52,6 +52,12 @@ async def embed_for_queue(bot):
                     songs += 1
 
                 if i == len(embeds)-1:
+                    queue_length = 0
+                    for song in bot.MusicPlayer.queue:
+                        queue_length += song.song_duration
+
+                    bot.MusicPlayer.queue_length = queue_length
+
                     embed.set_footer(
                         text=f"{len(bot.MusicPlayer.queue)} songs in queue | {format_time(bot.MusicPlayer.queue_length)} total length")
                 if len(queue_msg_holder) == i:
@@ -252,17 +258,11 @@ def song_added_embed(bot, song):
         embed.set_author(name=f"{song.requester}", url="http://isala.me",
                          icon_url=f"{song.requester.avatar_url}")
 
-        queue_length = 0
-        for song in player.queue:
-            queue_length += song.song_duration
-
-        player.queue_length = queue_length
-
         embed.add_field(name="By", value=f"{song.song_uploader}")
         embed.add_field(name="Song Duration", value=f"{format_time(song.song_duration)}")
 
         if player.queue:
-            embed.add_field(name="Estimated time until playing", value=f"{format_time(queue_length + player.progress())}")
+            embed.add_field(name="Estimated time until playing", value=f"{format_time(bot.MusicPlayer.queue_length + song.song_duration + player.progress())}")
             embed.add_field(name="Position in queue", value=f"{len(player.queue)}")
 
         return embed
