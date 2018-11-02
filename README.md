@@ -2,8 +2,10 @@ Commands for @admin/@DJ
 ```diff
 !play [song url | song name]                                          (alias - !p)
 -  Play Song from url or search youtube if only a name is given
+!playnext [song url | song name]                                      (alias - !pn)
+- Add this song to top of the queue
 !playnow [song url | song name] 
--  Instantly playing  the song
+- Skip song currently playing song and instantly start playing this the song
 !playlist [playlist url]
 -  Plays a entire playlist from youtube **only works for youtube
 !join
