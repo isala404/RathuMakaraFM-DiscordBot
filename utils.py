@@ -52,6 +52,7 @@ async def embed_for_queue(bot):
                     songs += 1
 
                 if len(queue_msg_holder) == i:
+                    embed.set_footer(text=f"{len(bot.MusicPlayer.queue)} songs in queue | {format_time(bot.MusicPlayer.queue_length)} total length")
                     msg = await bot.MusicPlayer.player_channel.send(embed=embed)
                     queue_msg_holder.append(msg)
                 elif len(queue_msg_holder) > i:
@@ -135,7 +136,7 @@ async def embed_for_nowplaying(bot):
                         continue
 
             try:
-                embed.set_footer(text="bot by @mrsupiri",
+                embed.set_footer(text="bot made by @mrsupiri",
                                  icon_url="https://cdn2.iconfinder.com/data/icons/minimalism/512/twitter.png")
 
                 if bot.now_playing_msg is None:
@@ -240,7 +241,7 @@ async def stream_logs(filename, bot):
 
 def song_added_embed(bot, song):
     try:
-        player = bot.player
+        player = bot.MusicPlayer
         embed = discord.Embed(title=f"{song.video_name}", colour=discord.Colour(0x5ddefc),
                               url=f"{song.song_webpage_url}")
 
@@ -259,7 +260,7 @@ def song_added_embed(bot, song):
         embed.add_field(name="Song Duration", value=f"{song.song_duration}")
 
         if player.queue:
-            embed.add_field(name="Estimated time until playing", value=f"{queue_length + player.progress()}")
+            embed.add_field(name="Estimated time until playing", value=f"{format_time(queue_length + player.progress())}")
             embed.add_field(name="Position in queue", value=f"{len(player.queue)}")
 
         return embed
