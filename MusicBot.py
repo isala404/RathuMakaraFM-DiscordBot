@@ -74,7 +74,7 @@ class MusicBot(discord.Client):
                     )
                     self.logger.info(
                         f"{user.name} accepted {request.requester.name}'s Request to play {request.song_webpage_url}")
-                    await self.cmd_play(request.song_webpage_url, author=request.requester)
+                    await self.cmd_play(request.song_webpage_url, author=request.requester, request=True)
                     self.MusicPlayer.request_queue.remove(request)
                     await reaction.message.delete()
                 elif reaction.emoji == '❌':
@@ -116,6 +116,9 @@ class MusicBot(discord.Client):
 
         elif cmd == 'playnow':
             await self.cmd_play(args, download=False, play_now=True, author=message.author)
+
+        elif cmd == 'playnext' or cmd == 'pn':
+            await self.cmd_play(args, download=False, play_next=True, author=message.author)
 
         elif cmd == 'playlist':
             await self.cmd_play(args, playlist=True, author=message.author)
@@ -184,7 +187,7 @@ class MusicBot(discord.Client):
         self.MusicPlayer.song_request_queue_channel = self.get_channel(song_request_queue_channel)
         self.MusicPlayer.playlist_queue_channel = self.get_channel(playlist_queue_channel)
 
-    async def cmd_play(self, url, download=False, playlist=False, author=None, play_now=False):
+    async def cmd_play(self, url, download=False, playlist=False, author=None, play_now=False, play_next=False, request=False):
         if self.voice_client is None:
             await self.auto_join()
 
@@ -213,9 +216,14 @@ class MusicBot(discord.Client):
         if playlist:
             return True
 
-        if song and not play_now:
+        if request:
+            song.user_request = True
+
+        if song and not play_now and not play_next:
             await self.MusicPlayer.add(song)
             return True
+        elif song and play_next:
+            await self.MusicPlayer.add(song, play_now=True)
         elif song and play_now:
             await self.MusicPlayer.add(song, play_now=True)
             await self.cmd_skip()
