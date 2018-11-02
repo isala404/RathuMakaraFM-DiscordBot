@@ -51,8 +51,10 @@ async def embed_for_queue(bot):
                     embed.add_field(name="\u200b", value=text)
                     songs += 1
 
+                if i == len(queue_msg_holder)-1:
+                    embed.set_footer(
+                        text=f"{len(bot.MusicPlayer.queue)} songs in queue | {format_time(bot.MusicPlayer.queue_length)} total length")
                 if len(queue_msg_holder) == i:
-                    embed.set_footer(text=f"{len(bot.MusicPlayer.queue)} songs in queue | {format_time(bot.MusicPlayer.queue_length)} total length")
                     msg = await bot.MusicPlayer.player_channel.send(embed=embed)
                     queue_msg_holder.append(msg)
                 elif len(queue_msg_holder) > i:
