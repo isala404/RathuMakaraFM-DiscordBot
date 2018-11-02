@@ -54,7 +54,8 @@ async def embed_for_queue(bot):
                 if i == len(embeds)-1:
                     queue_length = 0
                     for song in bot.MusicPlayer.queue:
-                        queue_length += song.song_duration
+                        if song.song_duration:
+                            queue_length += song.song_duration
 
                     bot.MusicPlayer.queue_length = queue_length
 
