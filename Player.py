@@ -147,8 +147,10 @@ class MusicPlayer:
                     self.bot.logger.error("Error while mentioning requested user")
                     self.bot.logger.exception(e)
 
+                # Some kind of a weird bug in after argument require to pass toggle like this
                 try:
-                    self.voice.play(self.current, after=self.toggle_play_next_song())
+                    self.voice.play(self.current,
+                                    after=lambda e_: self.toggle_play_next_song() if e_ else self.toggle_play_next_song())
                 except Exception as e:
                     self.bot.logger.critical(f"Can't Play {self.current.song_webpage_url}")
                     self.bot.logger.exception(e)
