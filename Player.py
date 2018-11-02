@@ -136,6 +136,9 @@ class MusicPlayer:
                 except Exception as e:
                     self.bot.logger.error("Unable to Change Bot Activity")
                     self.bot.logger.exception(e)
+
+                if self.current.user_request:
+                    self.song_request_channel.send(f"Now Playing {self.current.user_request.mention}'s Request\n{self.current.song_name} by {self.current.song_uploader}")
                 # self.bot.logger.debug(f"Now Playing: {self.current.song_name} by {self.current.song_uploader}")
 
                 # Some kind of a weird bug in after argument require to pass toggle like this
@@ -270,6 +273,7 @@ class Song(discord.PCMVolumeTransformer):
         if message:
             data['requester'] = message.author
             await message.add_reaction("👌")
+            data['user_request'] = True
         elif author:
             data['requester'] = author
         else:
@@ -313,6 +317,10 @@ class Song(discord.PCMVolumeTransformer):
 
         if 'requester' in data.keys():
             self.requester = data['requester']
+
+        if 'user_request' in data.keys():
+            self.user_request = data['user_request']
+
 
 
 def extract_song_artist_title(name, artist):
