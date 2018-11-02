@@ -256,7 +256,7 @@ class MusicBot(discord.Client):
         up_next = ""
         if self.MusicPlayer.queue:
             up_next = f"\n:play_pause: {self.MusicPlayer.queue[0].song_name} by {self.MusicPlayer.queue[0].song_uploader}"
-        self.MusicPlayer.skip()
+
         if not author:
             await self.MusicPlayer.bot_cmd_channel.send(f":track_next: Skipping {self.MusicPlayer.current.song_name}"+up_next)
         else:

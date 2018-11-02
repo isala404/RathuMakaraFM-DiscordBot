@@ -141,6 +141,8 @@ class MusicPlayer:
                     if self.current.is_a_request:
                         self.song_request_channel.send(
                             f"Now Playing {self.current.user_request.mention}'s Request\n{self.current.song_name} by {self.current.song_uploader}")
+                    else:
+                        self.bot.logger.info(f"{self.current.is_a_request}")
                 except Exception as e:
                     self.bot.logger.error("Error while mentioning requested user")
                     self.bot.logger.exception(e)
