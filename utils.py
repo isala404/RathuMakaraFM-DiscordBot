@@ -238,7 +238,7 @@ async def stream_logs(filename, bot):
         await asyncio.sleep(1)
 
 
-async def song_added_embed(bot, song):
+def song_added_embed(bot, song):
     try:
         player = bot.player
         embed = discord.Embed(title=f"{song.video_name}", colour=discord.Colour(0x5ddefc),
