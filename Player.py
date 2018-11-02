@@ -137,21 +137,9 @@ class MusicPlayer:
                     self.bot.logger.error("Unable to Change Bot Activity")
                     self.bot.logger.exception(e)
 
-                try:
-                    if self.current.is_a_request:
-                        self.song_request_channel.send(
-                            f"Now Playing {self.current.user_request.mention}'s Request\n{self.current.song_name} by {self.current.song_uploader}")
-                    else:
-                        self.bot.logger.info(f"{self.current.is_a_request}")
-                except Exception as e:
-                    self.bot.logger.error("Error while mentioning requested user")
-                    self.bot.logger.exception(e)
-
                 # Some kind of a weird bug in after argument require to pass toggle like this
                 try:
-                    self.voice.play(self.current,
-                                    after=lambda
-                                        e_: self.toggle_play_next_song() if e_ else self.toggle_play_next_song())
+                    self.voice.play(self.current, after=self.toggle_play_next_song())
                 except Exception as e:
                     self.bot.logger.critical(f"Can't Play {self.current.song_webpage_url}")
                     self.bot.logger.exception(e)
@@ -181,7 +169,7 @@ class Song(discord.PCMVolumeTransformer):
         self.user_request = None
         self.video_name = None
         self.song_progress = 0
-        self.is_a_request = False
+        self.user_request = None
         self.update_metadata(data)
 
     @classmethod
@@ -205,7 +193,6 @@ class Song(discord.PCMVolumeTransformer):
     @classmethod
     async def download(cls, url, author, bot, playlist=False):
         loop = bot.loop or asyncio.get_event_loop()
-        bot.logger.info(f"Downloading {url}")
         try:
             if playlist:
                 await bot.MusicPlayer.bot_cmd_channel.send(
@@ -281,7 +268,6 @@ class Song(discord.PCMVolumeTransformer):
         if message:
             data['requester'] = message.author
             await message.add_reaction("👌")
-            data['is_a_request'] = True
         elif author:
             data['requester'] = author
         else:
@@ -325,9 +311,6 @@ class Song(discord.PCMVolumeTransformer):
 
         if 'requester' in data.keys():
             self.requester = data['requester']
-
-        if 'is_a_request' in data.keys():
-            self.is_a_request = data['is_a_request']
 
 
 def extract_song_artist_title(name, artist):
