@@ -257,7 +257,7 @@ def song_added_embed(bot, song):
         player.queue_length = queue_length
 
         embed.add_field(name="By", value=f"{song.song_uploader}")
-        embed.add_field(name="Song Duration", value=f"{song.song_duration}")
+        embed.add_field(name="Song Duration", value=f"{format_time(song.song_duration)}")
 
         if player.queue:
             embed.add_field(name="Estimated time until playing", value=f"{format_time(queue_length + player.progress())}")
