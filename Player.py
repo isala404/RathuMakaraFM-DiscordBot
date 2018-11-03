@@ -105,6 +105,7 @@ class MusicPlayer:
             except Exception as e:
                 self.bot.logger.error("Error while deleting the song")
                 self.bot.logger.exception(e)
+        self.current = None
 
     async def add(self, song, play_now=False):
         if play_now:
