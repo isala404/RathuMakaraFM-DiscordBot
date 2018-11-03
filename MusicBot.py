@@ -261,7 +261,7 @@ class MusicBot(discord.Client):
                 await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to by {author.mention} from Web Dashboard")
 
     async def cmd_skip(self, author=None):
-        if self.MusicPlayer.current:
+        if not self.MusicPlayer.current:
             await self.MusicPlayer.bot_cmd_channel.send("Can't Skip, Nothing is Playing")
             return False
         up_next = ""
