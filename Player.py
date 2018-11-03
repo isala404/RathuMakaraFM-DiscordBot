@@ -7,6 +7,7 @@ from difflib import SequenceMatcher
 from requests_html import AsyncHTMLSession, HTMLSession
 from random import shuffle
 from utils import song_added_embed
+import os
 
 asession = AsyncHTMLSession()
 session = HTMLSession()
@@ -99,6 +100,12 @@ class MusicPlayer:
     def toggle_next(self):
         self.play_next_song = True
         self.is_pause = False
+        if self.current:
+            try:
+                os.remove(self.current.song_url)
+            except Exception as e:
+                self.bot.logger.error("Error while deleting the song")
+                self.bot.logger.exception(e)
 
     async def add(self, song, play_now=False):
         if play_now:
