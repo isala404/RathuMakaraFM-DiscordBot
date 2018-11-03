@@ -100,7 +100,7 @@ class MusicPlayer:
     def toggle_next(self):
         self.play_next_song = True
         self.is_pause = False
-        if self.current:
+        if self.current and self.current.song_url.startwith('http'):
             try:
                 os.remove(self.current.song_url)
             except Exception as e:
