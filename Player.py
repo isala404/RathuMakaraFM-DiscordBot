@@ -214,7 +214,9 @@ class Song(discord.PCMVolumeTransformer):
             if playlist:
                 await bot.MusicPlayer.bot_cmd_channel.send(
                     ':robot: I am Processing the Playlist this may take few minutes')
-            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
+                data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
+            else:
+                data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=True))
         except Exception as e:
             bot.logger.error(f"Error While Downloading {url}")
             bot.logger.exception(e)
