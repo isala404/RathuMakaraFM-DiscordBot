@@ -98,7 +98,7 @@ class MusicPlayer:
     def toggle_next(self):
         self.play_next_song = True
         self.is_pause = False
-        if self.current:
+        if self.current and self.current.song_path:
             try:
                 if os.path.isfile(self.current.song_path):
                     os.remove(self.current.song_path)
