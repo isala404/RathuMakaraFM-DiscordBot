@@ -222,20 +222,26 @@ class Song(discord.PCMVolumeTransformer):
             bot.logger.exception(e)
             return None
 
-        if playlist and 'entries' in data and data['entries'][0]['playlist'] != '':
-            entries = data['entries']
-            shuffle(entries)
-
-            for entry in entries:
-                data = await loop.run_in_executor(None, lambda: ytdl.extract_info(entry['webpage_url'], download=True))
-                if 'entries' in data:
-                    data = data['entries'][0]
-                data['requester'] = author
-                data['path'] = ytdl.prepare_filename(data)
-                a = await bot.MusicPlayer.add(cls(discord.FFmpegPCMAudio(data['path'], **ffmpeg_options), data=data))
-                if not a:
-                    return True
-            return True
+        try:
+            if playlist and 'entries' in data and data['entries'][0]['playlist'] != '':
+                entries = data['entries']
+                shuffle(entries)
+                entries = entries[:20-len(bot.MusicPlayer.queue)]
+                await bot.MusicPlayer.bot_cmd_channel.send(
+                    f':robot: I can only put {0-len(bot.MusicPlayer.queue)} songs to the queue')
+                for entry in entries:
+                    data = await loop.run_in_executor(None, lambda: ytdl.extract_info(entry['webpage_url'], download=True))
+                    if 'entries' in data:
+                        data = data['entries'][0]
+                    data['requester'] = author
+                    data['path'] = ytdl.prepare_filename(data)
+                    await bot.MusicPlayer.add(cls(discord.FFmpegPCMAudio(data['path'], **ffmpeg_options), data=data))
+                await bot.MusicPlayer.bot_cmd_channel.send(':robot: My work here is done :)')
+                return True
+        except Exception as e:
+            bot.logger.error("Error While Processing the Playlist")
+            bot.logger.exception(e)
+            return None
 
         if 'entries' in data:
             data = data['entries'][0]
