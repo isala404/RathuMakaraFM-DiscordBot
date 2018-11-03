@@ -214,16 +214,18 @@ class Song(discord.PCMVolumeTransformer):
             if playlist:
                 await bot.MusicPlayer.bot_cmd_channel.send(
                     ':robot: I am Processing the Playlist this may take few minutes')
-            entries = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
+                data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
         except Exception as e:
             bot.logger.error(f"Error While Downloading {url}")
             bot.logger.exception(e)
             return None
 
-        if playlist and 'entries' in entries and entries['entries'][0]['playlist'] != '':
-            shuffle(entries['entries'])
-            for entry in entries['entries']:
-                data = await loop.run_in_executor(None, lambda: ytdl.extract_info(entry['url'], download=True))
+        if playlist and 'entries' in data and data['entries'][0]['playlist'] != '':
+            entries = data['entries']
+            shuffle(entries)
+
+            for entry in entries:
+                data = await loop.run_in_executor(None, lambda: ytdl.extract_info(entry['webpage_url'], download=True))
                 if 'entries' in data:
                     data = data['entries'][0]
                 data['requester'] = author
@@ -232,10 +234,8 @@ class Song(discord.PCMVolumeTransformer):
                 if not a:
                     return True
             return True
-        else:
-            data = entries
 
-        if 'entries' in entries:
+        if 'entries' in data:
             data = data['entries'][0]
 
         data['requester'] = author
