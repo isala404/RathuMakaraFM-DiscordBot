@@ -118,7 +118,7 @@ class MusicBot(discord.Client):
             await self.cmd_play(args, download=False, play_now=True, author=message.author)
 
         elif cmd == 'playnext' or cmd == 'pn':
-            await self.cmd_play(args, download=False, play_next=True, author=message.author)
+            await self.cmd_play(args, download=True, play_next=True, author=message.author)
 
         elif cmd == 'playlist':
             await self.cmd_play(args, playlist=True, author=message.author)
@@ -142,7 +142,7 @@ class MusicBot(discord.Client):
             await self.cmd_clear_queue()
 
         elif cmd == 'stream':
-            await self.cmd_play(args, message)
+            await self.cmd_play(args, download=False, author=message.author)
 
         elif cmd == 'shuffle':
             shuffle(self.MusicPlayer.queue)
