@@ -63,9 +63,7 @@ class MusicPlayer:
     def skip(self):
         if self.current:
             self.voice.stop()
-            self.play_next_song = True
-            self.is_pause = False
-            self.current = None
+            self.toggle_next()
 
     def pause(self):
         if self.is_playing():
@@ -100,9 +98,10 @@ class MusicPlayer:
     def toggle_next(self):
         self.play_next_song = True
         self.is_pause = False
-        if self.current and not self.current.song_url.startwith('http'):
+        if self.current:
             try:
-                os.remove(self.current.song_url)
+                if os.path.isfile(self.current.song_path):
+                    os.remove(self.current.song_path)
             except Exception as e:
                 self.bot.logger.error("Error while deleting the song")
                 self.bot.logger.exception(e)
@@ -187,6 +186,7 @@ class Song(discord.PCMVolumeTransformer):
         self.user_request = None
         self.video_name = None
         self.song_progress = 0
+        self.song_path = None
         self.update_metadata(data)
 
     @classmethod
@@ -214,23 +214,28 @@ class Song(discord.PCMVolumeTransformer):
             if playlist:
                 await bot.MusicPlayer.bot_cmd_channel.send(
                     ':robot: I am Processing the Playlist this may take few minutes')
-            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=True))
+            entries = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
         except Exception as e:
             bot.logger.error(f"Error While Downloading {url}")
             bot.logger.exception(e)
             return None
 
-        if playlist and 'entries' in data and data['entries'][0]['playlist'] != '':
-            shuffle(data['entries'])
-            for entry in data['entries']:
-                entry['requester'] = author
-                entry['path'] = ytdl.prepare_filename(entry)
-                a = await bot.MusicPlayer.add(cls(discord.FFmpegPCMAudio(entry['url'], **ffmpeg_options), data=entry))
+        if playlist and 'entries' in entries and entries['entries'][0]['playlist'] != '':
+            shuffle(entries['entries'])
+            for entry in entries['entries']:
+                data = await loop.run_in_executor(None, lambda: ytdl.extract_info(entry['url'], download=True))
+                if 'entries' in data:
+                    data = data['entries'][0]
+                data['requester'] = author
+                data['path'] = ytdl.prepare_filename(data)
+                a = await bot.MusicPlayer.add(cls(discord.FFmpegPCMAudio(data['path'], **ffmpeg_options), data=entry))
                 if not a:
                     return True
             return True
+        else:
+            data = entries
 
-        if 'entries' in data:
+        if 'entries' in entries:
             data = data['entries'][0]
 
         data['requester'] = author
@@ -328,6 +333,9 @@ class Song(discord.PCMVolumeTransformer):
 
         if 'requester' in data.keys():
             self.requester = data['requester']
+
+        if 'path' in data.keys():
+            self.song_path = data['path']
 
 
 def extract_song_artist_title(name, artist):

@@ -159,7 +159,7 @@ async def embed_for_nowplaying(bot):
                 bot.now_playing_msg = await bot.MusicPlayer.player_channel.send(embed=embed)
 
             if player.is_playing() and player.current.song_duration:
-                await asyncio.sleep(player.current.song_duration / 35)
+                await asyncio.sleep(min(player.current.song_duration / 35, 20))
             elif player.is_playing() and not player.current.song_duration:
                 await asyncio.sleep(10)
             else:
