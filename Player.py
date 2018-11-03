@@ -60,9 +60,10 @@ class MusicPlayer:
         return self.voice.is_playing()
 
     def skip(self):
-        self.voice.stop()
-        self.play_next_song = True
-        self.is_pause = False
+        if not self.play_next_song and self.current:
+            self.voice.stop()
+            self.play_next_song = True
+            self.is_pause = False
 
     def pause(self):
         if self.is_playing():
