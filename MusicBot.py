@@ -74,7 +74,7 @@ class MusicBot(discord.Client):
                     )
                     self.logger.info(
                         f"{user.name} accepted {request.requester.name}'s Request to play {request.song_webpage_url}")
-                    await self.cmd_play(request.song_webpage_url, author=request.requester, request=True)
+                    await self.cmd_play(request.song_webpage_url, author=request.requester, request=True, download=True)
                     self.MusicPlayer.request_queue.remove(request)
                     await reaction.message.delete()
                 elif reaction.emoji == '❌':
