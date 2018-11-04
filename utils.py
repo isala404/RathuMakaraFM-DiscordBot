@@ -48,7 +48,7 @@ async def embed_for_queue(bot):
                         song.song_webpage_url.replace("www.youtube.com/watch?v=", "youtu.be/"),
                         format_time(song.song_duration) if song.song_duration else "", song.requester.name
                     )
-                    embed.add_field(name="\u200b", value=text)
+                    embed.add_field(name="\u200b", value=text[:255])
                     songs += 1
 
                 if i == len(embeds)-1:
@@ -86,7 +86,7 @@ async def embed_for_nowplaying(bot):
         try:
             player = bot.MusicPlayer
             if player.is_pause and player.current:
-                activity = discord.Game(f"{player.current.song_name} by {player.current.song_uploader}")
+                activity = discord.Game(f"{player.current.song_name} by {player.current.song_uploader}"[:100])
                 await player.bot.change_presence(status=discord.Status.idle, activity=activity)
                 while player.is_pause:
                     await asyncio.sleep(1)
@@ -95,7 +95,7 @@ async def embed_for_nowplaying(bot):
 
             if player.current and player.is_playing():
                 embed = discord.Embed(title=f"Now Playing",
-                                      description=f"[{player.current.song_name}]({player.current.song_webpage_url})",
+                                      description=f"[{player.current.song_name}]({player.current.song_webpage_url})"[:255],
                                       colour=discord.Colour(0x3f8517))
 
                 if player.current.song_thumbnail:
@@ -132,7 +132,7 @@ async def embed_for_nowplaying(bot):
                         player.clear()
                         song = choice(player.auto_playlist)
                         bot.logger.info(f"Queue is empty, Auto Playing: {song}")
-                        await player.bot.cmd_play(song, download=False, author=player.bot.user)
+                        await player.bot.cmd_play(song, download=True, author=player.bot.user)
                     else:
                         await player.bot.change_presence(status=discord.Status.do_not_disturb, activity=None)
                         bot.logger.warning(
@@ -232,6 +232,8 @@ def progress_bar(iteration, total, prefix_='', suffix='', decimals=1, length=35,
         length      - Optional  : character length of bar (Int)
         fill        - Optional  : bar fill character (Str)
     """
+    if iteration > total:
+        iteration = total
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
     filled_length = int(length * iteration // total)
     bar = fill * filled_length + '▱' * (length - filled_length)
