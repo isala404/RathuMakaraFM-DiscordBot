@@ -115,7 +115,7 @@ class MusicBot(discord.Client):
             await self.cmd_play(args, download=True, author=message.author)
 
         elif cmd == 'playnow':
-            await self.cmd_play(args, download=True, play_now=True, author=message.author)
+            await self.cmd_play(args, download=False, play_now=True, author=message.author)
 
         elif cmd == 'playnext' or cmd == 'pn':
             await self.cmd_play(args, download=True, play_next=True, author=message.author)
