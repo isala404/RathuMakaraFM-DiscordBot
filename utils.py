@@ -273,10 +273,10 @@ def song_added_embed(bot, song, play_now):
                 queue_length += song.song_duration
 
         if bot.MusicPlayer.current and bot.MusicPlayer.current.song_duration:
-            eta = queue_length + bot.MusicPlayer.current.song_duration - player.progress()
+            queue_length = queue_length + bot.MusicPlayer.current.song_duration - player.progress()
 
         if player.queue:
-            embed.add_field(name="Estimated time until playing", value=f"{format_time(eta)}")
+            embed.add_field(name="Estimated time until playing", value=f"{format_time(queue_length)}")
             if play_now:
                 embed.add_field(name="Position in queue", value="1")
             else:
