@@ -124,7 +124,10 @@ class MusicBot(discord.Client):
             await self.cmd_play(args, playlist=True, author=message.author)
 
         elif cmd == 'join':
-            await self.join(message.author.voice.channel)
+            if message.author.voice:
+                await self.join(message.author.voice.channel)
+            else:
+                await message.channel.send('{0.author.mention} You must be on voice channel to summon the bot'.format(message))
 
         elif cmd == 'volume' or cmd == 'v':
             await self.cmd_volume(args)

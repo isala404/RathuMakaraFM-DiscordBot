@@ -8,6 +8,7 @@ from requests_html import AsyncHTMLSession, HTMLSession
 from random import shuffle
 from utils import song_added_embed
 import os
+from mutagen.mp3 import MP3
 
 asession = AsyncHTMLSession()
 session = HTMLSession()
@@ -225,13 +226,14 @@ class Song(discord.PCMVolumeTransformer):
         try:
             if playlist and 'entries' in data and data['entries'][0]['playlist'] != '':
                 entries = data['entries']
-                if len(entries) > 20-len(bot.MusicPlayer.queue):
+                if len(entries) > 20 - len(bot.MusicPlayer.queue):
                     shuffle(entries)
-                    entries = entries[:20-len(bot.MusicPlayer.queue)]
+                    entries = entries[:20 - len(bot.MusicPlayer.queue)]
                     await bot.MusicPlayer.bot_cmd_channel.send(
                         f':robot: I can only put {20-len(bot.MusicPlayer.queue)} songs to the queue')
                 for entry in entries:
-                    data = await loop.run_in_executor(None, lambda: ytdl.extract_info(entry['webpage_url'], download=True))
+                    data = await loop.run_in_executor(None,
+                                                      lambda: ytdl.extract_info(entry['webpage_url'], download=True))
                     if 'entries' in data:
                         data = data['entries'][0]
                     data['requester'] = author
@@ -276,8 +278,11 @@ class Song(discord.PCMVolumeTransformer):
                             data['uploader'] = y.strip('@')
                             break
                     break
+            data_ = await bot.loop.run_in_executor(None, lambda: ytdl.extract_info(data['url'], download=True))
+            data['path'] = ytdl.prepare_filename(data_)
+            data['duration'] = round(MP3(data['path']).info.length)
 
-            return cls(discord.FFmpegPCMAudio(data['url'], **ffmpeg_options), data=data)
+            return cls(discord.FFmpegPCMAudio(data['path'], **ffmpeg_options), data=data)
         except Exception as e:
             bot.logger.error(f"Error While Phasing {url}")
             bot.logger.exception(e)
