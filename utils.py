@@ -156,14 +156,8 @@ async def embed_for_nowplaying(bot):
             except Exception as e:
                 bot.logger.error("Error While Updating Now Playing")
                 bot.logger.exception(e)
-                bot.now_playing_msg = await bot.MusicPlayer.player_channel.send(embed=embed)
 
-            if player.is_playing() and player.current.song_duration:
-                await asyncio.sleep(min(player.current.song_duration / 35, 20))
-            elif player.is_playing() and not player.current.song_duration:
-                await asyncio.sleep(10)
-            else:
-                await asyncio.sleep(5)
+            await asyncio.sleep(5)
 
         except Exception as e:
             bot.logger.error("Error While Displaying Now Playing")
