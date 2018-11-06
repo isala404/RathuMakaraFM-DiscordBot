@@ -115,7 +115,7 @@ class MusicBot(discord.Client):
             await self.cmd_play(args, download=True, author=message.author)
 
         elif cmd == 'playnow':
-            await self.cmd_play(args, download=False, play_now=True, author=message.author)
+            await self.cmd_play(args, download=True, play_now=True, author=message.author)
 
         elif cmd == 'playnext' or cmd == 'pn':
             await self.cmd_play(args, download=True, play_next=True, author=message.author)
@@ -190,7 +190,7 @@ class MusicBot(discord.Client):
         self.MusicPlayer.song_request_queue_channel = self.get_channel(song_request_queue_channel)
         self.MusicPlayer.playlist_queue_channel = self.get_channel(playlist_queue_channel)
 
-    async def cmd_play(self, url, download=False, playlist=False, author=None, play_now=False, play_next=False, request=False):
+    async def cmd_play(self, url, download=True, playlist=False, author=None, play_now=False, play_next=False, request=False):
         if self.voice_client is None:
             await self.auto_join()
 

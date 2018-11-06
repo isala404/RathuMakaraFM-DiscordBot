@@ -132,7 +132,7 @@ async def embed_for_nowplaying(bot):
                         player.clear()
                         song = choice(player.auto_playlist)
                         bot.logger.info(f"Queue is empty, Auto Playing: {song}")
-                        await player.bot.cmd_play(song, download=False, author=player.bot.user)
+                        await player.bot.cmd_play(song, download=True, author=player.bot.user)
                     else:
                         await player.bot.change_presence(status=discord.Status.do_not_disturb, activity=None)
                         bot.logger.warning(
