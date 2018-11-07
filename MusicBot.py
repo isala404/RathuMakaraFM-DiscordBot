@@ -182,6 +182,7 @@ class MusicBot(discord.Client):
 
     async def cmd_reset(self):
         await self.MusicPlayer.bot_cmd_channel.send(":arrows_counterclockwise: Restarting Bot")
+        os.system('/root/Musicbot.sh')
         await self.auto_join()
         self.MusicPlayer = MusicPlayer(self)
         self.MusicPlayer.bot_cmd_channel = self.get_channel(bot_cmd_channels[0])
