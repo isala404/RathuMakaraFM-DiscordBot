@@ -182,7 +182,12 @@ class MusicBot(discord.Client):
 
     async def cmd_reset(self):
         await self.MusicPlayer.bot_cmd_channel.send(":arrows_counterclockwise: Restarting Bot")
-        os.system('/root/Musicbot.sh')
+        try:
+            os.system('/root/Musicbot.sh')
+        except Exception as e:
+            self.logger.error('Error While Restarting Screen')
+            self.logger.exception(e)
+
         await self.auto_join()
         self.MusicPlayer = MusicPlayer(self)
         self.MusicPlayer.bot_cmd_channel = self.get_channel(bot_cmd_channels[0])
