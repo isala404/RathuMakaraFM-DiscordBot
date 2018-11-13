@@ -22,12 +22,12 @@ def player_info():
                                  "progress": bot.MusicPlayer.progress(),
                                  "extractor": bot.MusicPlayer.current.song_extractor,
                                  "requester": bot.MusicPlayer.current.requester.name,
-                                 "pause": bot.MusicPlayer.is_pause
+                                 "is_pause": bot.MusicPlayer.is_pause
                                  },
                  'Queue': []}
         else:
-            d = {"Now Playing": {"song": None, "uploader": None, "thumbnail": None, "url": None, "duration": None,
-                                 "progress": None, "extractor": None, "requester": None},
+            d = {"now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None, "duration": None,
+                                 "progress": None, "extractor": None, "requester": None, "is_pause": False},
                  'Queue': []}
         for song in bot.MusicPlayer.queue:
             d['Queue'].append({"song": song.song_name,
@@ -39,8 +39,8 @@ def player_info():
                                "requester": song.requester.name})
 
     else:
-        d = {"Now Playing": {"song": None, "uploader": None, "thumbnail": None, "url": None, "duration": None,
-                             "progress": None, "extractor": None, "requester": None},
+        d = {"now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None, "duration": None,
+                             "progress": None, "extractor": None, "requester": None, "is_pause": False},
              'Queue': []}
 
     return jsonify(d)
