@@ -24,13 +24,13 @@ def player_info():
                                  "requester": bot.MusicPlayer.current.requester.name,
                                  "is_pause": bot.MusicPlayer.is_pause
                                  },
-                 'Queue': []}
+                 'queue': []}
         else:
             d = {"now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None, "duration": None,
                                  "progress": None, "extractor": None, "requester": None, "is_pause": False},
                  'Queue': []}
         for song in bot.MusicPlayer.queue:
-            d['Queue'].append({"song": song.song_name,
+            d['queue'].append({"song": song.song_name,
                                "uploader": song.song_name,
                                "thumbnail": song.song_thumbnail,
                                "url": song.song_webpage_url,
