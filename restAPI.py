@@ -14,7 +14,7 @@ def player_info():
     bot.logger.info(f"API Request for {request.path} from {request.remote_addr}")
     if bot and bot.MusicPlayer:
         if bot.MusicPlayer.current:
-            d = {"Now Playing": {"song": bot.MusicPlayer.current.song_name,
+            d = {"now_playing": {"song": bot.MusicPlayer.current.song_name,
                                  "uploader": bot.MusicPlayer.current.song_name,
                                  "thumbnail": bot.MusicPlayer.current.song_thumbnail,
                                  "url": bot.MusicPlayer.current.song_webpage_url,
