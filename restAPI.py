@@ -28,7 +28,7 @@ def player_info():
         else:
             d = {"now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None, "duration": None,
                                  "progress": None, "extractor": None, "requester": None, "is_pause": False},
-                 'Queue': []}
+                 'queue': []}
         for song in bot.MusicPlayer.queue:
             d['queue'].append({"song": song.song_name,
                                "uploader": song.song_name,
@@ -41,7 +41,7 @@ def player_info():
     else:
         d = {"now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None, "duration": None,
                              "progress": None, "extractor": None, "requester": None, "is_pause": False},
-             'Queue': []}
+             'queue': []}
 
     return jsonify(d)
 
