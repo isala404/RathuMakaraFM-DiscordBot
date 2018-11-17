@@ -288,38 +288,42 @@ def song_added_embed(bot, song, play_now):
 
 async def save_status(bot):
     while True:
-        if bot and bot.MusicPlayer:
-            if bot.MusicPlayer.current:
-                d = {"now_playing": {"song": bot.MusicPlayer.current.song_name,
-                                     "uploader": bot.MusicPlayer.current.song_name,
-                                     "thumbnail": bot.MusicPlayer.current.song_thumbnail,
-                                     "url": bot.MusicPlayer.current.song_webpage_url,
-                                     "duration": bot.MusicPlayer.current.song_duration,
-                                     "progress": bot.MusicPlayer.progress(),
-                                     "extractor": bot.MusicPlayer.current.song_extractor,
-                                     "requester": bot.MusicPlayer.current.requester.name,
-                                     "is_pause": bot.MusicPlayer.is_pause
-                                     },
-                     'queue': []}
+        try:
+            if bot and bot.MusicPlayer:
+                if bot.MusicPlayer.current:
+                    d = {"now_playing": {"song": bot.MusicPlayer.current.song_name,
+                                         "uploader": bot.MusicPlayer.current.song_name,
+                                         "thumbnail": bot.MusicPlayer.current.song_thumbnail,
+                                         "url": bot.MusicPlayer.current.song_webpage_url,
+                                         "duration": bot.MusicPlayer.current.song_duration,
+                                         "progress": bot.MusicPlayer.progress(),
+                                         "extractor": bot.MusicPlayer.current.song_extractor,
+                                         "requester": bot.MusicPlayer.current.requester.name,
+                                         "is_pause": bot.MusicPlayer.is_pause
+                                         },
+                         'queue': []}
+                else:
+                    d = {"now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None, "duration": None,
+                                         "progress": None, "extractor": None, "requester": None, "is_pause": False},
+                         'queue': []}
+                for song in bot.MusicPlayer.queue:
+                    d['queue'].append({"song": song.song_name,
+                                       "uploader": song.song_name,
+                                       "thumbnail": song.song_thumbnail,
+                                       "url": song.song_webpage_url,
+                                       "duration": song.song_duration,
+                                       "extractor": song.song_extractor,
+                                       "requester": song.requester.name})
+
             else:
                 d = {"now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None, "duration": None,
                                      "progress": None, "extractor": None, "requester": None, "is_pause": False},
                      'queue': []}
-            for song in bot.MusicPlayer.queue:
-                d['queue'].append({"song": song.song_name,
-                                   "uploader": song.song_name,
-                                   "thumbnail": song.song_thumbnail,
-                                   "url": song.song_webpage_url,
-                                   "duration": song.song_duration,
-                                   "extractor": song.song_extractor,
-                                   "requester": song.requester.name})
 
-        else:
-            d = {"now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None, "duration": None,
-                                 "progress": None, "extractor": None, "requester": None, "is_pause": False},
-                 'queue': []}
-
-        with open('status.json', 'w') as outfile:
-            json.dump(d, outfile)
+            with open('status.json', 'w') as outfile:
+                json.dump(d, outfile)
+        except Exception as e:
+            bot.logger.error("Error Dumping status to status.json")
+            bot.logger.exception(e)
 
         asyncio.sleep(0.5)
