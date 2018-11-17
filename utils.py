@@ -6,8 +6,6 @@ import subprocess
 import select
 import json
 
-
-
 queue_msg_holder = []
 
 
@@ -54,7 +52,7 @@ async def embed_for_queue(bot):
                     embed.add_field(name="\u200b", value=text[:255])
                     songs += 1
 
-                if i == len(embeds)-1:
+                if i == len(embeds) - 1:
                     queue_length = 0
                     for song in bot.MusicPlayer.queue:
                         if song.song_duration:
@@ -98,7 +96,8 @@ async def embed_for_nowplaying(bot):
 
             if player.current and player.is_playing():
                 embed = discord.Embed(title=f"Now Playing",
-                                      description=f"[{player.current.song_name}]({player.current.song_webpage_url})"[:255],
+                                      description=f"[{player.current.song_name}]({player.current.song_webpage_url})"[
+                                                  :255],
                                       colour=discord.Colour(0x3f8517))
 
                 if player.current.song_thumbnail:
@@ -291,21 +290,29 @@ async def save_status(bot):
         try:
             if bot and bot.MusicPlayer:
                 if bot.MusicPlayer.current:
-                    d = {"now_playing": {"song": bot.MusicPlayer.current.song_name,
-                                         "uploader": bot.MusicPlayer.current.song_uploader,
-                                         "thumbnail": bot.MusicPlayer.current.song_thumbnail,
-                                         "url": bot.MusicPlayer.current.song_webpage_url,
-                                         "duration": bot.MusicPlayer.current.song_duration,
-                                         "progress": bot.MusicPlayer.progress(),
-                                         "extractor": bot.MusicPlayer.current.song_extractor,
-                                         "requester": bot.MusicPlayer.current.requester.name,
-                                         "is_pause": bot.MusicPlayer.is_pause
-                                         },
-                         'queue': []}
+                    d = {
+                        "now_playing": {"song": bot.MusicPlayer.current.song_name,
+                                        "uploader": bot.MusicPlayer.current.song_uploader,
+                                        "thumbnail": bot.MusicPlayer.current.song_thumbnail,
+                                        "url": bot.MusicPlayer.current.song_webpage_url,
+                                        "duration": bot.MusicPlayer.current.song_duration,
+                                        "progress": bot.MusicPlayer.progress(),
+                                        "extractor": bot.MusicPlayer.current.song_extractor,
+                                        "requester": bot.MusicPlayer.current.requester.name,
+                                        },
+                        "queue": [],
+                        "is_pause": bot.MusicPlayer.is_pause,
+                        "auto_play": bot.MusicPlayer.autoplay
+                    }
                 else:
-                    d = {"now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None, "duration": None,
-                                         "progress": None, "extractor": None, "requester": None, "is_pause": False},
-                         'queue': []}
+                    d = {
+                        "now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None,
+                                        "duration": None, "progress": None, "extractor": None, "requester": None,
+                                        "is_pause": False},
+                        'queue': [],
+                        "is_pause": bot.MusicPlayer.is_pause,
+                        "auto_play": bot.MusicPlayer.autoplay
+                    }
                 for song in bot.MusicPlayer.queue:
                     d['queue'].append({"song": song.song_name,
                                        "uploader": song.song_uploader,
@@ -316,12 +323,18 @@ async def save_status(bot):
                                        "requester": song.requester.name})
 
             else:
-                d = {"now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None, "duration": None,
-                                     "progress": None, "extractor": None, "requester": None, "is_pause": False},
-                     'queue': []}
+                d = {
+                    "now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None,
+                                    "duration": None, "progress": None, "extractor": None, "requester": None,
+                                    "is_pause": False},
+                    'queue': [],
+                    "is_pause": False,
+                    "auto_play": False
+                }
 
             with open('status.json', 'w') as outfile:
                 json.dump(d, outfile)
+
         except Exception as e:
             bot.logger.error("Error Dumping status to status.json")
             bot.logger.exception(e)
