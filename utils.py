@@ -326,4 +326,4 @@ async def save_status(bot):
             bot.logger.error("Error Dumping status to status.json")
             bot.logger.exception(e)
 
-        asyncio.sleep(0.5)
+        await asyncio.sleep(0.5)
