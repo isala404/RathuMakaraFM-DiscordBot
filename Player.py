@@ -51,7 +51,7 @@ class MusicPlayer:
         self.playlist_queue_channel = None
         self.audio_player = self.bot.loop.create_task(self.audio_player_task())
         self.auto_playlist_loop = self.bot.loop.create_task(self.create_auto_playlist())
-        self.volume = 0.5
+        self.volume = 1
         self.request_queue = []
         self.auto_playlist = []
         self.is_pause = False
@@ -169,7 +169,7 @@ class MusicPlayer:
 
 
 class Song(discord.PCMVolumeTransformer):
-    def __init__(self, source, *, data, volume=0.5):
+    def __init__(self, source, *, data, volume=1):
         super().__init__(source, volume)
 
         self.song_name = None
