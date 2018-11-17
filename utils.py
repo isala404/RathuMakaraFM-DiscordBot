@@ -292,7 +292,7 @@ async def save_status(bot):
             if bot and bot.MusicPlayer:
                 if bot.MusicPlayer.current:
                     d = {"now_playing": {"song": bot.MusicPlayer.current.song_name,
-                                         "uploader": bot.MusicPlayer.current.song_name,
+                                         "uploader": bot.MusicPlayer.current.song_uploader,
                                          "thumbnail": bot.MusicPlayer.current.song_thumbnail,
                                          "url": bot.MusicPlayer.current.song_webpage_url,
                                          "duration": bot.MusicPlayer.current.song_duration,
@@ -308,7 +308,7 @@ async def save_status(bot):
                          'queue': []}
                 for song in bot.MusicPlayer.queue:
                     d['queue'].append({"song": song.song_name,
-                                       "uploader": song.song_name,
+                                       "uploader": song.song_uploader,
                                        "thumbnail": song.song_thumbnail,
                                        "url": song.song_webpage_url,
                                        "duration": song.song_duration,
