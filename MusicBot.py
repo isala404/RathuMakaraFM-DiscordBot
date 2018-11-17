@@ -32,6 +32,7 @@ class MusicBot(discord.Client):
         self.loop.create_task(embed_for_nowplaying(self))
         self.loop.create_task(embed_for_queue(self))
         self.loop.create_task(update_song_progress(self))
+        self.loop.create_task(save_status(self))
 
     async def on_connect(self):
         await self.auto_join()
