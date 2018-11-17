@@ -1,8 +1,12 @@
 import threading
 from flask import Flask, request, jsonify
-from MusicBot import MusicBot
 from utils import *
 import asyncio
+import os
+
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+from MusicBot import MusicBot
 
 bot = MusicBot()
 app = Flask(__name__)
@@ -90,7 +94,8 @@ def bot_command():
 
         if data['cmd'] != "request" and not [y.id for y in member.roles if
                                              y.id in bot_commanders]:
-            return json.dumps({'error': 'User Don\'t have permission for this action'}), 401, {'ContentType': 'application/json'}
+            return json.dumps({'error': 'User Don\'t have permission for this action'}), 401, {
+                'ContentType': 'application/json'}
 
         result = asyncio.run_coroutine_threadsafe(
             parse_cmd(data['cmd'], data['args'], user), bot.loop)
