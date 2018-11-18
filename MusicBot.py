@@ -162,7 +162,7 @@ class MusicBot(discord.Client):
             await self.cmd_request(args, message)
 
         elif cmd == 'autoplay' or cmd == 'ap':
-            await self.cmd_autoplay(args, message.author)
+            await self.cmd_autoplay(args)
 
         elif cmd == 'reset':
             await self.cmd_reset()
@@ -250,7 +250,7 @@ class MusicBot(discord.Client):
             if not author:
                 await self.MusicPlayer.bot_cmd_channel.send(":no_entry: Sound level is not given")
             else:
-                await self.MusicPlayer.bot_cmd_channel.send(f"{author.mention} :no_entry: Sound level is not given")
+                await self.MusicPlayer.bot_cmd_channel.send(f"{author.name} :no_entry: Sound level is not given")
             return False
 
         volume = int(volume)
@@ -261,7 +261,7 @@ class MusicBot(discord.Client):
             if not author:
                 await self.MusicPlayer.bot_cmd_channel.send(f":sound: Volume is set to {volume}")
             else:
-                await self.MusicPlayer.bot_cmd_channel.send(f":sound: Volume is set to {volume} by {author.mention} from Web Dashboard")
+                await self.MusicPlayer.bot_cmd_channel.send(f":sound: Volume is set to {volume} by {author.name} from Web Dashboard")
         else:
             for i in range(round(self.MusicPlayer.volume * 100), volume + 1):
                 self.MusicPlayer.set_volume(i)
@@ -269,7 +269,7 @@ class MusicBot(discord.Client):
             if not author:
                 await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to {volume}")
             else:
-                await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to by {author.mention} from Web Dashboard")
+                await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to by {author.name} from Web Dashboard")
 
     async def cmd_skip(self, author=None):
         if not self.MusicPlayer.current:
@@ -374,16 +374,20 @@ class MusicBot(discord.Client):
         elif author:
             await Song.search(arg, None, self, author=author)
 
-    async def cmd_autoplay(self, arg, author):
+    async def cmd_autoplay(self, arg, author=None):
         if arg == 'on':
             self.MusicPlayer.autoplay = True
-            self.logger.info(f"AutoPlay was Enabled by {author.name}")
-            await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Enabled by {author.name}")
+            self.logger.info(f"AutoPlay was Enabled")
+            if author:
+                await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Enabled by {author.name}")
+            return True
 
         elif arg == 'off':
             self.MusicPlayer.autoplay = False
-            self.logger.info(f"AutoPlay was Disabled by {author.name}")
-            await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Disabled by {author.name}")
+            self.logger.info(f"AutoPlay was Disabled")
+            if author:
+                await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Disabled by {author.name}")
+            return True
         else:
             return False
 

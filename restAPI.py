@@ -72,7 +72,7 @@ def bot_command():
 
         data = request.get_json(force=True)
 
-        bot.logger.info(f"API Request: {request.path} => {data}")
+        bot.logger.info(f"API Request: {request.path} => {data.pop('authkey', None)}")
 
         if 'authkey' not in data or 'cmd' not in data or 'user_id' not in data or 'args' not in data:
             bot.logger.info(f"Bad Request from {request.remote_addr}: Missing some key attributes")
@@ -148,6 +148,11 @@ async def parse_cmd(cmd, args, author):
 
     elif cmd == 'request' or cmd == 'req':
         result = await bot.cmd_request(args, None, author=author)
+
+    elif cmd == 'autoplay':
+        result = await bot.cmd_autoplay(args, author=author)
+
+
     else:
         return False
     return result

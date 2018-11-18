@@ -353,12 +353,12 @@ class Song(discord.PCMVolumeTransformer):
 
 
 def extract_song_artist_title(name, artist):
+
+    name = re.sub(r"[(\[].*?[)\]]", "", name).lower().replace('official', '').replace('lyric', '').replace('video',
+                                                                                                           '').strip()
+    artist = re.sub(r"(\w)([A-Z])", r"\1 \2", artist.replace('VEVO', '')).lower().replace('vevo', '').replace(
+        'official', '').strip()
     return name, artist
-    # name = re.sub(r"[(\[].*?[)\]]", "", name).lower().replace('official', '').replace('lyric', '').replace('video',
-    #                                                                                                        '').strip()
-    # artist = re.sub(r"(\w)([A-Z])", r"\1 \2", artist.replace('VEVO', '')).lower().replace('vevo', '').replace(
-    #     'official', '').strip()
-    #
     # artist_from_title = ''
     #
     # for i in name.translate(str.maketrans('', '', string.punctuation)).split(' '):

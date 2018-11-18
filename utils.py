@@ -302,7 +302,8 @@ async def save_status(bot):
                                         },
                         "queue": [],
                         "is_pause": bot.MusicPlayer.is_pause,
-                        "auto_play": bot.MusicPlayer.autoplay
+                        "auto_play": bot.MusicPlayer.autoplay,
+                        "volume": bot.MusicPlayer.volume
                     }
                 else:
                     d = {
@@ -311,7 +312,8 @@ async def save_status(bot):
                                         "is_pause": False},
                         'queue': [],
                         "is_pause": bot.MusicPlayer.is_pause,
-                        "auto_play": bot.MusicPlayer.autoplay
+                        "auto_play": bot.MusicPlayer.autoplay,
+                        "volume": bot.MusicPlayer.volume
                     }
                 for song in bot.MusicPlayer.queue:
                     d['queue'].append({"song": song.song_name,
@@ -329,7 +331,8 @@ async def save_status(bot):
                                     "is_pause": False},
                     'queue': [],
                     "is_pause": False,
-                    "auto_play": False
+                    "auto_play": False,
+                    "volume": 100
                 }
 
             with open('status.json', 'w') as outfile:
