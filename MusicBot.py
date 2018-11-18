@@ -250,7 +250,7 @@ class MusicBot(discord.Client):
             if not author:
                 await self.MusicPlayer.bot_cmd_channel.send(":no_entry: Sound level is not given")
             else:
-                await self.MusicPlayer.bot_cmd_channel.send(f"{author.name} :no_entry: Sound level is not given")
+                await self.MusicPlayer.bot_cmd_channel.send(f"{author.mention} :no_entry: Sound level is not given")
             return False
 
         volume = int(volume)
@@ -269,7 +269,7 @@ class MusicBot(discord.Client):
             if not author:
                 await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to {volume}")
             else:
-                await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to by {author.name} from Web Dashboard")
+                await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to {volume} by {author.name} from Web Dashboard")
 
     async def cmd_skip(self, author=None):
         if not self.MusicPlayer.current:
