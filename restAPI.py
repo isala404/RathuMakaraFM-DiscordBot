@@ -24,7 +24,8 @@ def user_info():
                 'ContentType': 'application/json'}
 
         data = request.get_json(force=True)
-        bot.logger.info(f"API Request: {request.path} => {data}")
+        data_ = data.copy()
+        bot.logger.info(f"API Request: {request.path} => {data_.pop('authkey', None)}")
 
         if 'authkey' not in data or 'user_id' not in data:
             bot.logger.info(f"Bad Request from {request.remote_addr}: Missing some key attributes")
@@ -71,8 +72,8 @@ def bot_command():
                 'ContentType': 'application/json'}
 
         data = request.get_json(force=True)
-        data_ = data.pop('authkey', None)
-        bot.logger.info(f"API Request: {request.path} => {data_}")
+        data_ = data.copy()
+        bot.logger.info(f"API Request: {request.path} => {data_.pop('authkey', None)}")
 
         if 'authkey' not in data or 'cmd' not in data or 'user_id' not in data or 'args' not in data:
             bot.logger.info(f"Bad Request from {request.remote_addr}: Missing some key attributes")
