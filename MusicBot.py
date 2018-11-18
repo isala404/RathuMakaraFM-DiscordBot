@@ -379,14 +379,18 @@ class MusicBot(discord.Client):
             self.MusicPlayer.autoplay = True
             self.logger.info(f"AutoPlay was Enabled")
             if author:
-                await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Enabled by {author.name}")
+                await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Enabled by {author.name} from Web Dashboard")
+            else:
+                await self.MusicPlayer.bot_cmd_channel.send("AutoPlay is Now Enabled")
             return True
 
         elif arg == 'off':
             self.MusicPlayer.autoplay = False
             self.logger.info(f"AutoPlay was Disabled")
             if author:
-                await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Disabled by {author.name}")
+                await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Disabled by {author.name} from Web Dashboard")
+            else:
+                await self.MusicPlayer.bot_cmd_channel.send("AutoPlay is Now Disabled")
             return True
         else:
             return False
