@@ -125,6 +125,7 @@ async def embed_for_nowplaying(bot):
 
             else:
                 await bot.change_presence(status=discord.Status.idle, activity=None)
+                player.current = None
                 embed = discord.Embed(title="Nothing to Play :disappointed_relieved:",
                                       description="type !play `[song name|url]` or !request `[song name|url]` to play a song",
                                       colour=discord.Colour(0x3f8517))
@@ -308,8 +309,7 @@ async def save_status(bot):
                 else:
                     d = {
                         "now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None,
-                                        "duration": None, "progress": None, "extractor": None, "requester": None,
-                                        "is_pause": False},
+                                        "duration": None, "progress": None, "extractor": None, "requester": None},
                         'queue': [],
                         "is_pause": bot.MusicPlayer.is_pause,
                         "auto_play": bot.MusicPlayer.autoplay,
@@ -327,8 +327,7 @@ async def save_status(bot):
             else:
                 d = {
                     "now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None,
-                                    "duration": None, "progress": None, "extractor": None, "requester": None,
-                                    "is_pause": False},
+                                    "duration": None, "progress": None, "extractor": None, "requester": None},
                     'queue': [],
                     "is_pause": False,
                     "auto_play": False,

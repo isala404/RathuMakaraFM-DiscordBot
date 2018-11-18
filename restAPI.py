@@ -155,7 +155,6 @@ async def parse_cmd(cmd, args, author):
     elif cmd == 'autoplay':
         result = await bot.cmd_autoplay(args, author=author)
 
-
     else:
         return False
     return result
