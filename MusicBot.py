@@ -205,7 +205,7 @@ class MusicBot(discord.Client):
         if url.strip() == '' or not url:
             if not self.MusicPlayer.is_playing():
                 await self.cmd_resume()
-                return True
+                return
             return False
 
         if not author:
@@ -262,6 +262,7 @@ class MusicBot(discord.Client):
                 await self.MusicPlayer.bot_cmd_channel.send(f":sound: Volume is set to {volume}")
             else:
                 await self.MusicPlayer.bot_cmd_channel.send(f":sound: Volume is set to {volume} by {author.name} from Web Dashboard")
+            return True
         else:
             for i in range(round(self.MusicPlayer.volume * 100), volume + 1):
                 self.MusicPlayer.set_volume(i)
@@ -270,6 +271,7 @@ class MusicBot(discord.Client):
                 await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to {volume}")
             else:
                 await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to {volume} by {author.name} from Web Dashboard")
+            return True
 
     async def cmd_skip(self, author=None):
         if not self.MusicPlayer.current:
