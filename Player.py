@@ -137,32 +137,35 @@ class MusicPlayer:
     async def audio_player_task(self):
         while True:
             if self.queue and self.play_next_song and (not self.is_playing() and not self.is_pause):
-                self.current = self.queue.pop(0)
-                self.current.volume = self.volume
                 try:
-                    activity = discord.Game(f"{self.current.song_name} by {self.current.song_uploader}")
-                    await self.bot.change_presence(status=discord.Status.online, activity=activity)
-                except Exception as e:
-                    self.bot.logger.error("Unable to Change Bot Activity")
-                    self.bot.logger.exception(e)
+                    self.current = self.queue.pop(0)
+                    self.current.volume = self.volume
+                    try:
+                        activity = discord.Game(f"{self.current.song_name} by {self.current.song_uploader}")
+                        await self.bot.change_presence(status=discord.Status.online, activity=activity)
+                    except Exception as e:
+                        self.bot.logger.error("Unable to Change Bot Activity")
+                        self.bot.logger.exception(e)
 
-                try:
-                    if self.current.user_request:
-                        await self.song_request_channel.send(
-                            f"Now Playing {self.current.requester.mention}'s Request\n{self.current.song_name} by {self.current.song_uploader}\n<{self.current.song_webpage_url}>")
-                except Exception as e:
-                    self.bot.logger.error("Error while mentioning requested user")
-                    self.bot.logger.exception(e)
+                    try:
+                        if self.current.user_request:
+                            await self.song_request_channel.send(
+                                f"Now Playing {self.current.requester.mention}'s Request\n{self.current.song_name} by {self.current.song_uploader}\n<{self.current.song_webpage_url}>")
+                    except Exception as e:
+                        self.bot.logger.error("Error while mentioning requested user")
+                        self.bot.logger.exception(e)
 
-                # Some kind of a weird bug in after argument require to pass toggle like this
-                try:
-                    self.voice.play(self.current,
-                                    after=lambda e_: self.toggle_next() if e_ else self.toggle_next())
-                except Exception as e:
-                    self.bot.logger.critical(f"Can't Play {self.current.song_webpage_url}")
-                    self.bot.logger.exception(e)
+                    # Some kind of a weird bug in after argument require to pass toggle like this
+                    try:
+                        self.voice.play(self.current,
+                                        after=lambda e_: self.toggle_next() if e_ else self.toggle_next())
+                    except Exception as e:
+                        self.bot.logger.critical(f"Can't Play {self.current.song_webpage_url}")
+                        self.bot.logger.exception(e)
 
-                self.play_next_song = False
+                    self.play_next_song = False
+                except Exception as e:
+                    self.bot.logger.exception(e)
 
             else:
                 await asyncio.sleep(0.01)
