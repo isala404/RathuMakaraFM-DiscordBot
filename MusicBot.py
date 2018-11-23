@@ -36,15 +36,22 @@ class MusicBot(discord.Client):
 
     async def on_connect(self):
         await self.auto_join()
+        self.create_MusicPlayer()
+        self.loop.create_task(chat_cleaner(self))
+        self.loop.create_task(stream_logs('logs/RathuMakara.log', self))
+        await asyncio.sleep(2)
+
+    def create_MusicPlayer(self):
+        queue = []
+        if self.MusicPlayer:
+            queue = self.MusicPlayer.queue
         self.MusicPlayer = MusicPlayer(self)
         self.MusicPlayer.bot_cmd_channel = self.get_channel(bot_cmd_channels[0])
         self.MusicPlayer.player_channel = self.get_channel(player_channel)
         self.MusicPlayer.song_request_channel = self.get_channel(song_request_channel)
         self.MusicPlayer.song_request_queue_channel = self.get_channel(song_request_queue_channel)
         self.MusicPlayer.playlist_queue_channel = self.get_channel(playlist_queue_channel)
-        self.loop.create_task(chat_cleaner(self))
-        self.loop.create_task(stream_logs('logs/RathuMakara.log', self))
-        await asyncio.sleep(2)
+        self.MusicPlayer.queue = queue
 
     async def join(self, channel):
         if self.voice_client and self.voice_client.is_connected():
@@ -128,7 +135,8 @@ class MusicBot(discord.Client):
             if message.author.voice:
                 await self.join(message.author.voice.channel)
             else:
-                await message.channel.send('{0.author.mention} You must be on voice channel to summon the bot'.format(message))
+                await message.channel.send(
+                    '{0.author.mention} You must be on voice channel to summon the bot'.format(message))
 
         elif cmd == 'volume' or cmd == 'v':
             await self.cmd_volume(args)
@@ -190,15 +198,8 @@ class MusicBot(discord.Client):
             self.logger.error('Error While Restarting Screen')
             self.logger.exception(e)
 
-        await self.auto_join()
-        self.MusicPlayer = MusicPlayer(self)
-        self.MusicPlayer.bot_cmd_channel = self.get_channel(bot_cmd_channels[0])
-        self.MusicPlayer.player_channel = self.get_channel(player_channel)
-        self.MusicPlayer.song_request_channel = self.get_channel(song_request_channel)
-        self.MusicPlayer.song_request_queue_channel = self.get_channel(song_request_queue_channel)
-        self.MusicPlayer.playlist_queue_channel = self.get_channel(playlist_queue_channel)
-
-    async def cmd_play(self, url, download=True, playlist=False, author=None, play_now=False, play_next=False, request=False):
+    async def cmd_play(self, url, download=True, playlist=False, author=None, play_now=False, play_next=False,
+                       request=False):
         if self.voice_client is None:
             await self.auto_join()
 
@@ -261,7 +262,8 @@ class MusicBot(discord.Client):
             if not author:
                 await self.MusicPlayer.bot_cmd_channel.send(f":sound: Volume is set to {volume}")
             else:
-                await self.MusicPlayer.bot_cmd_channel.send(f":sound: Volume is set to {volume} by {author.name} from Web Dashboard")
+                await self.MusicPlayer.bot_cmd_channel.send(
+                    f":sound: Volume is set to {volume} by {author.name} from Web Dashboard")
             return True
         else:
             for i in range(round(self.MusicPlayer.volume * 100), volume + 1):
@@ -270,7 +272,8 @@ class MusicBot(discord.Client):
             if not author:
                 await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to {volume}")
             else:
-                await self.MusicPlayer.bot_cmd_channel.send(f":loud_sound: Volume is set to {volume} by {author.name} from Web Dashboard")
+                await self.MusicPlayer.bot_cmd_channel.send(
+                    f":loud_sound: Volume is set to {volume} by {author.name} from Web Dashboard")
             return True
 
     async def cmd_skip(self, author=None):
@@ -282,9 +285,11 @@ class MusicBot(discord.Client):
             up_next = f"\n:play_pause: {self.MusicPlayer.queue[0].song_name} by {self.MusicPlayer.queue[0].song_uploader}"
 
         if not author:
-            await self.MusicPlayer.bot_cmd_channel.send(f":track_next: Skipping {self.MusicPlayer.current.song_name}"+up_next)
+            await self.MusicPlayer.bot_cmd_channel.send(
+                f":track_next: Skipping {self.MusicPlayer.current.song_name}" + up_next)
         else:
-            await self.MusicPlayer.bot_cmd_channel.send(f":track_next: Skipping {self.MusicPlayer.current.song_name} by {author.name} from Web Dashboard"+up_next)
+            await self.MusicPlayer.bot_cmd_channel.send(
+                f":track_next: Skipping {self.MusicPlayer.current.song_name} by {author.name} from Web Dashboard" + up_next)
         self.MusicPlayer.skip()
         return True
 
@@ -381,7 +386,8 @@ class MusicBot(discord.Client):
             self.MusicPlayer.autoplay = True
             self.logger.info(f"AutoPlay was Enabled")
             if author:
-                await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Enabled by {author.name} from Web Dashboard")
+                await self.MusicPlayer.bot_cmd_channel.send(
+                    f"AutoPlay is Now Enabled by {author.name} from Web Dashboard")
             else:
                 await self.MusicPlayer.bot_cmd_channel.send("AutoPlay is Now Enabled")
             return True
@@ -390,7 +396,8 @@ class MusicBot(discord.Client):
             self.MusicPlayer.autoplay = False
             self.logger.info(f"AutoPlay was Disabled")
             if author:
-                await self.MusicPlayer.bot_cmd_channel.send(f"AutoPlay is Now Disabled by {author.name} from Web Dashboard")
+                await self.MusicPlayer.bot_cmd_channel.send(
+                    f"AutoPlay is Now Disabled by {author.name} from Web Dashboard")
             else:
                 await self.MusicPlayer.bot_cmd_channel.send("AutoPlay is Now Disabled")
             return True

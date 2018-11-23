@@ -140,13 +140,10 @@ async def embed_for_nowplaying(bot):
                         await player.bot.change_presence(status=discord.Status.do_not_disturb, activity=None)
                         bot.logger.warning(
                             f"Bot Hit a Idle status\nqueue = {player.queue}, is_pause = {player.is_pause}, play_next_song = {player.play_next_song}, current = {player.current}, is_playing = {player.is_playing()}")
-                        # bot.logger.warning("Restarting Bot")
-                        # queue = bot.MusicPlayer.queue
-                        # await bot.cmd_reset()
-                        # bot.MusicPlayer.queue = queue
-                        # bot.MusicPlayer.autoplay = True
-                        # await asyncio.sleep(5)
-                        # continue
+                        bot.logger.warning("Restarting Bot")
+                        await bot.MusicPlayer.bot_cmd_channel.send("Mr Stark I don't feel so good\nI will fix my self by skipping the current song\nIf I am repeating myself type !reset and save me")
+                        player.queue = player.queue[1:]
+                        bot.reset_MusicPlayer()
 
             try:
                 embed.set_footer(text="bot made by @mrsupiri",

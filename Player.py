@@ -351,6 +351,9 @@ class Song(discord.PCMVolumeTransformer):
         if 'path' in data.keys():
             self.song_path = data['path']
 
+    def __str__(self):
+        return self.song_webpage_url
+
 
 def extract_song_artist_title(name, artist):
 
@@ -358,32 +361,35 @@ def extract_song_artist_title(name, artist):
                                                                                                            '').strip().replace('audio', '')
     artist = re.sub(r"(\w)([A-Z])", r"\1 \2", artist.replace('VEVO', '')).lower().replace('vevo', '').replace(
         'official', '').strip()
-    return name.strip().title().replace('  ', ' '), artist.strip().title().replace('  ', ' ')
-    # artist_from_title = ''
-    #
-    # for i in name.translate(str.maketrans('', '', string.punctuation)).split(' '):
-    #     for y in artist.split(' '):
-    #         if i == y:
-    #             artist_from_title += y + ' '
-    #
-    # if len(artist_from_title.strip()) > 2:
-    #     if SequenceMatcher(None, artist, artist_from_title.strip()).ratio() > 0.6:
-    #         artist = min(artist, artist_from_title.strip())
-    #
-    # names = name.split(' - ')
-    #
-    # if len(names) <= 1:
-    #     names = name.split('-')
-    #
-    # if len(names) <= 1:
-    #     names = name.split(' ')
-    #
-    # name = ''
-    #
-    # for n in names:
-    #     if artist not in n:
-    #         name += n + ' '
-    #
-    # if name.find('ft') > 2:
-    #     name = name[:name.find('ft')]
-    # return name.strip().title().replace('  ', ' '), artist.strip().title().replace('  ', ' ')
+
+    artist_from_title = ''
+
+    for i in name.translate(str.maketrans('', '', string.punctuation)).split(' '):
+        for y in artist.split(' '):
+            if i == y:
+                artist_from_title += y + ' '
+
+    if len(artist_from_title.strip()) > 2:
+        if SequenceMatcher(None, artist, artist_from_title.strip()).ratio() > 0.6:
+            artist = min(artist, artist_from_title.strip())
+
+    names = name.split(' - ')
+
+    if len(names) <= 1:
+        names = name.split('-')
+
+    if len(names) <= 1:
+        names = name.split(' ')
+
+    name = ''
+
+    for n in names:
+        if artist not in n:
+            name += n + ' '
+
+    if name.find('ft') > 2:
+        name = name[:name.find('ft')]
+
+    name, artist = name.strip().title().replace('  ', ' '), artist.strip().title().replace('  ', ' ')
+
+    return name, artist
