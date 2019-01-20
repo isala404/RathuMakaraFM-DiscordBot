@@ -9,6 +9,7 @@ from random import shuffle
 from utils import song_added_embed
 import os
 from mutagen.mp3 import MP3
+from bot_constants import playlist_queue_channel
 
 asession = AsyncHTMLSession()
 session = HTMLSession()
@@ -133,6 +134,8 @@ class MusicPlayer:
                         self.auto_playlist.append(message)
                     await asyncio.sleep(300)
                 else:
+                    self.bot.logger.warning("Auto Playlist Channel is not defined")
+                    self.playlist_queue_channel = self.bot.get_channel(playlist_queue_channel)
                     await asyncio.sleep(1)
             except Exception as e:
                 self.bot.logger.error("Error while Creating AutoPlaylist")
