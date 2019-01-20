@@ -125,13 +125,18 @@ class MusicPlayer:
 
     async def create_auto_playlist(self):
         while True:
-            self.auto_playlist = []
-            if self.playlist_queue_channel:
-                async for message in self.playlist_queue_channel.history(limit=None):
-                    message = message.content.strip()
-                    self.auto_playlist.append(message)
-                await asyncio.sleep(300)
-            else:
+            try:
+                if self.playlist_queue_channel:
+                    self.auto_playlist = []
+                    async for message in self.playlist_queue_channel.history(limit=None):
+                        message = message.content.strip()
+                        self.auto_playlist.append(message)
+                    await asyncio.sleep(300)
+                else:
+                    await asyncio.sleep(1)
+            except Exception as e:
+                self.bot.logger.error("Error while Creating AutoPlaylist")
+                self.bot.logger.exception(e)
                 await asyncio.sleep(1)
 
     async def audio_player_task(self):
