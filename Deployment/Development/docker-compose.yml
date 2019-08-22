@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  rathumakara_bot:
+    container_name: rathumakara_discord_bot
+    build:
+      context: ../../
+      dockerfile: Deployment/Development/Dockerfile
+    command: bash -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      prefix: ${prefix}
+      bot_voice_channel: ${bot_voice_channel}
+      player_channel: ${player_channel}
+      bot_cmd_channels: ${bot_cmd_channels}
+      song_request_channel: ${song_request_channel}
+      song_request_queue_channel: ${song_request_queue_channel}
+      playlist_queue_channel: ${playlist_queue_channel}
+      cmd_help_channel: ${cmd_help_channel}
+      supiri: ${supiri}
+      bot_log_channel: ${bot_log_channel}
+      bot_commanders: ${bot_commanders}
+      bot_auth_key: ${bot_auth_key}
+      discord_client_id: ${discord_client_id}
+      discord_client_secret: ${discord_client_secret}
+      web_api_auth_key: ${web_api_auth_key}
+      web_api_ip: ${web_api_ip}
+      guild_id: ${guild_id}
+    ports:
+      - "5000:5000"
