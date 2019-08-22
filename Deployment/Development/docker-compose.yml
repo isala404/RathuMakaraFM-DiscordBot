@@ -6,17 +6,16 @@ services:
     build:
       context: ../../
       dockerfile: Deployment/Development/Dockerfile
-    command: bash -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
     environment:
       prefix: ${prefix}
       bot_voice_channel: ${bot_voice_channel}
       player_channel: ${player_channel}
-      bot_cmd_channels: ${bot_cmd_channels}
+      bot_cmd_channel: ${bot_cmd_channel}
       song_request_channel: ${song_request_channel}
       song_request_queue_channel: ${song_request_queue_channel}
       playlist_queue_channel: ${playlist_queue_channel}
       cmd_help_channel: ${cmd_help_channel}
-      supiri: ${supiri}
+      developer_client_id: ${developer_client_id}
       bot_log_channel: ${bot_log_channel}
       bot_commanders: ${bot_commanders}
       bot_auth_key: ${bot_auth_key}
