@@ -34,7 +34,7 @@ class MusicBot(discord.Client):
         await self.auto_join()
         self.create_MusicPlayer()
         self.loop.create_task(chat_cleaner(self))
-        self.loop.create_task(stream_logs('logs/RathuMakara.log', self))
+        self.loop.create_task(stream_logs('RathuMakara.log', self))
         await asyncio.sleep(2)
 
     def create_MusicPlayer(self):
@@ -101,7 +101,7 @@ class MusicBot(discord.Client):
         if not message_content.startswith(self.BotConfig.prefix):
             return
 
-        if not self.BotConfig.bot_cmd_channel == self.get_channel(message.channel) and (
+        if self.MusicPlayer.bot_cmd_channel != message.channel and (
                 message.channel != self.MusicPlayer.song_request_channel or not message_content.startswith('!req')):
             return
 
@@ -172,7 +172,6 @@ class MusicBot(discord.Client):
             await self.cmd_reset()
 
         elif cmd == 'leave' or cmd == 'fuckoff':
-
             self.logger.info("Bot is disconnecting")
             if self.voice_client and self.voice_client.is_connected():
                 await self.voice_client.disconnect()
@@ -399,6 +398,3 @@ class MusicBot(discord.Client):
             return True
         else:
             return False
-
-
-

@@ -87,6 +87,10 @@ async def embed_for_nowplaying(bot):
     while True:
         try:
             player = bot.MusicPlayer
+            if not player:
+                await asyncio.sleep(1)
+                continue
+
             if player.is_pause and player.current:
                 activity = discord.Game(f"{player.current.song_name} by {player.current.song_uploader}"[:100])
                 await player.bot.change_presence(status=discord.Status.idle, activity=activity)
@@ -171,6 +175,9 @@ async def update_song_progress(bot):
     await bot.wait_until_ready()
     await asyncio.sleep(3)
     while True:
+        if not bot.MusicPlayer:
+            await asyncio.sleep(1)
+            continue
         if bot.MusicPlayer.current and bot.MusicPlayer.is_playing() and not bot.MusicPlayer.is_pause:
             bot.MusicPlayer.current.song_progress += 1
             await asyncio.sleep(1)

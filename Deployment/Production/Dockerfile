@@ -1,5 +1,6 @@
 FROM python:3
 ENV PYTHONUNBUFFERED 1
+RUN apt-get update && apt-get install -y ffmpeg libopus-dev
 RUN mkdir app
 WORKDIR app
 COPY requirements.txt .
