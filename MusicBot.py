@@ -188,7 +188,9 @@ class MusicBot(discord.Client):
     async def cmd_reset(self):
         await self.MusicPlayer.bot_cmd_channel.send(":arrows_counterclockwise: Restarting Bot")
         try:
-            exit(1)
+            if self.voice_client and self.voice_client.is_connected():
+                await self.voice_client.disconnect()
+            os._exit(1)
         except Exception as e:
             self.logger.error('Error While Restarting Screen')
             self.logger.exception(e)
