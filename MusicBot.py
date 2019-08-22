@@ -34,7 +34,7 @@ class MusicBot(discord.Client):
         await self.auto_join()
         self.create_MusicPlayer()
         self.loop.create_task(chat_cleaner(self))
-        self.loop.create_task(stream_logs('RathuMakara.log', self))
+        self.loop.create_task(stream_logs('MusicBot.log', self))
         await asyncio.sleep(2)
 
     def create_MusicPlayer(self):
