@@ -22,7 +22,7 @@ class BotConfig:
 
     @staticmethod
     def get_env(name, required=False, as_int=False, as_list=False):
-        var = os.getenv(name)
+        var = os.getenv(name).strip()
         if required and not var:
             raise RuntimeError(f"{name} environment variables is not defined")
         if as_int:
