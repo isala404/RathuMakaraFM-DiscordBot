@@ -1,5 +1,6 @@
-bot_constants.py
+BotConfig.py
 *.pyo
 *.pyc
 .idea/
 logs/*
+.env

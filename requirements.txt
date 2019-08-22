@@ -1,0 +1,5 @@
+discord.py[voice]
+flask
+youtube_dl
+requests-html
+mutagen

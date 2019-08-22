@@ -1,21 +1,17 @@
-import os
 from Player import Song, MusicPlayer
 from utils import *
-from bot_constants import *
 from random import shuffle
-import logging
-from logging.handlers import RotatingFileHandler
 
 
-# noinspection PyMethodMayBeStatic
 class MusicBot(discord.Client):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, BotConfig, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.voice_client = None
         self.volume = 100
         self.MusicPlayer = None
         self.now_playing_msg = None
         self.logger = start_logger()
+        self.BotConfig = BotConfig
 
     async def get_voice_client(self, channel: discord.abc.GuildChannel):
         if isinstance(channel, discord.Object):
@@ -46,11 +42,11 @@ class MusicBot(discord.Client):
         if self.MusicPlayer:
             queue = self.MusicPlayer.queue
         self.MusicPlayer = MusicPlayer(self)
-        self.MusicPlayer.bot_cmd_channel = self.get_channel(bot_cmd_channels[0])
-        self.MusicPlayer.player_channel = self.get_channel(player_channel)
-        self.MusicPlayer.song_request_channel = self.get_channel(song_request_channel)
-        self.MusicPlayer.song_request_queue_channel = self.get_channel(song_request_queue_channel)
-        self.MusicPlayer.playlist_queue_channel = self.get_channel(playlist_queue_channel)
+        self.MusicPlayer.bot_cmd_channel = self.get_channel(self.BotConfig.bot_cmd_channel)
+        self.MusicPlayer.player_channel = self.get_channel(self.BotConfig.player_channel)
+        self.MusicPlayer.song_request_channel = self.get_channel(self.BotConfig.song_request_channel)
+        self.MusicPlayer.song_request_queue_channel = self.get_channel(self.BotConfig.song_request_queue_channel)
+        self.MusicPlayer.playlist_queue_channel = self.get_channel(self.BotConfig.playlist_queue_channel)
         self.MusicPlayer.queue = queue
 
     async def join(self, channel):
@@ -63,14 +59,14 @@ class MusicBot(discord.Client):
         await self.wait_until_ready()
         if self.voice_client and self.voice_client.is_connected():
             await self.voice_client.disconnect()
-        self.voice_client = await self.get_voice_client(self.get_channel(bot_voice_channel))
-        self.logger.debug(f"Auto Joining {self.get_channel(bot_voice_channel).mention}")
+        self.voice_client = await self.get_voice_client(self.get_channel(self.BotConfig.bot_voice_channel))
+        self.logger.debug(f"Auto Joining {self.get_channel(self.BotConfig.bot_voice_channel).mention}")
 
     async def on_reaction_add(self, reaction, user):
         if reaction.message.channel != self.MusicPlayer.song_request_queue_channel:
             return
 
-        if not [y.id for y in user.roles if int(y.id) in bot_commanders]:
+        if not [y.id for y in user.roles if int(y.id) in self.BotConfig.bot_commanders]:
             self.logger.info(f"{user.name} is not authorized to accept song requests")
             return
 
@@ -102,18 +98,18 @@ class MusicBot(discord.Client):
 
         message_content = message.content.strip()
 
-        if not message_content.startswith(prefix):
+        if not message_content.startswith(self.BotConfig.prefix):
             return
 
-        if not [channel for channel in bot_cmd_channels if message.channel == self.get_channel(channel)] and (
+        if not self.BotConfig.bot_cmd_channel == self.get_channel(message.channel) and (
                 message.channel != self.MusicPlayer.song_request_channel or not message_content.startswith('!req')):
             return
 
         if isinstance(message.channel, discord.abc.PrivateChannel):
             return
 
-        cmd = message_content.strip(prefix).split(' ')[0].lower()
-        args = ' '.join((message_content.strip(prefix).split(' ')[1:])).strip(" ")
+        cmd = message_content.strip(self.BotConfig.prefix).split(' ')[0].lower()
+        args = ' '.join((message_content.strip(self.BotConfig.prefix).split(' ')[1:])).strip(" ")
 
         self.logger.info(f"{message.author.name} => !{cmd} {args}")
         if cmd == 'hello':
@@ -186,14 +182,14 @@ class MusicBot(discord.Client):
             await message.channel.send(
                 '{0.author.mention} !{1} is invalid command refer #bot-command-list for more info'.format(message, cmd))
 
-    async def cmd_hello(self, message):
+    @staticmethod
+    async def cmd_hello(message):
         await message.channel.send('Hello {0.author.mention}'.format(message))
 
     async def cmd_reset(self):
         await self.MusicPlayer.bot_cmd_channel.send(":arrows_counterclockwise: Restarting Bot")
         try:
-            import subprocess
-            subprocess.call("bash /root/Musicbot.sh")
+            exit(1)
         except Exception as e:
             self.logger.error('Error While Restarting Screen')
             self.logger.exception(e)
@@ -405,30 +401,4 @@ class MusicBot(discord.Client):
             return False
 
 
-def start_logger():
-    logger = logging.getLogger('RathuMakara FM')
-    logger.setLevel(logging.DEBUG)
-    # create file handler which logs even debug messages
-    should_roll_over = os.path.isfile('logs/RathuMakara.log')
-    fh = RotatingFileHandler('logs/RathuMakara.log', mode='w', backupCount=5)
-    if should_roll_over:  # log already exists, roll over!
-        fh.doRollover()
-    fh.setLevel(logging.DEBUG)
-    # create console handler with a higher log level
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    # create formatter and add it to the handlers
-    formatter = logging.Formatter(
-        fmt='%(asctime)-10s - %(levelname)-5s: %(module)s:%(lineno)-d -  %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S')
-    ch.setFormatter(formatter)
-    fh.setFormatter(formatter)
-    # add the handlers to logger
-    logger.addHandler(ch)
-    logger.addHandler(fh)
-    return logger
 
-
-if __name__ == "__main__":
-    bot = MusicBot()
-    bot.run(bot_auth_key)

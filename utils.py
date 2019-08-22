@@ -1,10 +1,11 @@
+import os
 from random import choice
 import discord
 import asyncio
-from bot_constants import *
 import subprocess
 import select
 import json
+import logging
 
 queue_msg_holder = []
 
@@ -35,7 +36,7 @@ async def embed_for_queue(bot):
                 if len(embeds) > 1:
                     embed = discord.Embed(
                         description=":arrow_double_down: :musical_note: :notes: :arrow_double_down:",
-                        title=f"Song Queue {i+1}/{len(embeds)+1}",
+                        title=f"Song Queue {i + 1}/{len(embeds) + 1}",
                         colour=discord.Colour(0x3f8517))
                 else:
                     embed = discord.Embed(
@@ -121,7 +122,7 @@ async def embed_for_nowplaying(bot):
                 embed.add_field(name="By", value=f"`{player.current.song_uploader}`".title(), inline=True)
                 embed.add_field(name="Source", value=f"`{player.current.song_extractor}`".title(), inline=True)
                 embed.add_field(name="Requested by", value=f"`{player.current.requester}`".title(), inline=True)
-                embed.add_field(name="Volume", value=f"`{round(player.volume*100)}`", inline=True)
+                embed.add_field(name="Volume", value=f"`{round(player.volume * 100)}`", inline=True)
 
             else:
                 await bot.change_presence(status=discord.Status.idle, activity=None)
@@ -141,7 +142,8 @@ async def embed_for_nowplaying(bot):
                         bot.logger.warning(
                             f"Bot Hit a Idle status\nqueue = {player.queue}, is_pause = {player.is_pause}, play_next_song = {player.play_next_song}, current = {player.current}, is_playing = {player.is_playing()}")
                         bot.logger.warning("Restarting Bot")
-                        await bot.MusicPlayer.bot_cmd_channel.send("Mr Stark I don't feel so good\nI will fix my self by skipping the current song\nIf I am repeating myself type !reset and save me")
+                        await bot.MusicPlayer.bot_cmd_channel.send(
+                            "Mr Stark I don't feel so good\nI will fix my self by skipping the current song\nIf I am repeating myself type !reset and save me")
                         player.queue = player.queue[1:]
                         bot.reset_MusicPlayer()
 
@@ -178,27 +180,28 @@ async def update_song_progress(bot):
 
 async def chat_cleaner(bot):
     await bot.wait_until_ready()
-    async for message in bot.get_channel(player_channel).history(limit=None):
+    async for message in bot.get_channel(bot.BotConfig.player_channel).history(limit=None):
         await message.delete()
-    async for message in bot.get_channel(song_request_queue_channel).history(limit=None):
+    async for message in bot.get_channel(bot.BotConfig.song_request_queue_channel).history(limit=None):
         await message.delete()
 
     while True:
-        async for message in bot.get_channel(player_channel).history(limit=None):
+        async for message in bot.get_channel(bot.BotConfig.player_channel).history(limit=None):
             if message.author != bot.user:
                 await message.delete()
 
-        async for message in bot.get_channel(song_request_queue_channel).history(limit=None):
+        async for message in bot.get_channel(bot.BotConfig.song_request_queue_channel).history(limit=None):
             if message.author != bot.user:
                 await message.delete()
 
-        async for message in bot.get_channel(bot_log_channel).history(limit=None):
+        async for message in bot.get_channel(bot.BotConfig.bot_log_channel).history(limit=None):
             if message.author != bot.user:
                 await message.delete()
 
-        async for message in bot.get_channel(cmd_help_channel).history(limit=None):
-            if message.author != bot.get_user(supiri):
-                await message.delete()
+        if os.getenv("developer_client_id"):
+            async for message in bot.get_channel(bot.BotConfig.cmd_help_channel).history(limit=None):
+                if message.author != bot.get_user(int(os.getenv("developer_client_id"))):
+                    await message.delete()
 
 
 def chunks(l, n):
@@ -238,10 +241,11 @@ async def stream_logs(filename, bot):
     f = subprocess.Popen(['tail', '-F', filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p = select.poll()
     p.register(f.stdout)
-    await bot.get_channel(bot_log_channel).send("```\n```")
+    await bot.get_channel(bot.BotConfig.bot_log_channel).send("```\n```")
     while True:
         if p.poll(1):
-            await bot.get_channel(bot_log_channel).send(f"```py\n{f.stdout.readline().decode().strip()}```")
+            await bot.get_channel(bot.BotConfig.bot_log_channel).send(
+                f"```py\n{f.stdout.readline().decode().strip()}```")
         await asyncio.sleep(1)
 
 
@@ -253,7 +257,7 @@ def song_added_embed(bot, song, play_now):
 
         embed.set_thumbnail(url=f"{song.song_thumbnail}")
 
-        embed.set_author(name=f"{song.requester}", url="http://isala.me",
+        embed.set_author(name=f"{song.requester}", url="https://isala.me",
                          icon_url=f"{song.requester.avatar_url}")
 
         embed.add_field(name="By", value=f"{song.song_uploader}")
@@ -339,3 +343,108 @@ async def save_status(bot):
             bot.logger.exception(e)
 
         await asyncio.sleep(0.5)
+
+
+async def parse_cmd(bot, cmd, args, author):
+    if cmd == 'play':
+        result = await bot.cmd_play(args, download=True, author=author)
+
+    elif cmd == 'playnow':
+        result = await bot.cmd_play(args, download=False, play_now=True, author=author)
+
+    elif cmd == 'playnext':
+        result = await bot.cmd_play(args, download=False, play_next=True, author=author)
+
+    elif cmd == 'playlist':
+        result = await bot.cmd_play(args, playlist=True, author=author)
+
+    elif cmd == 'volume':
+        result = await bot.cmd_volume(args, author=author)
+
+    elif cmd == 'skip':
+        result = await bot.cmd_skip(author=author)
+
+    elif cmd == 'pause':
+        result = await bot.cmd_pause(author=author)
+
+    elif cmd == 'resume':
+        result = await bot.cmd_resume(author=author)
+
+    elif cmd == 'clearQueue':
+        result = await bot.cmd_clear_queue(author=author)
+
+    elif cmd == 'stream':
+        result = await bot.cmd_play(args, None, author=author)
+
+    elif cmd == 'remove' or cmd == 'rm':
+        result = await bot.cmd_remove_from_queue(args, author=author)
+
+    elif cmd == 'move' or cmd == 'm':
+        result = await bot.cmd_move_song(args, author=author)
+
+    elif cmd == 'request' or cmd == 'req':
+        result = await bot.cmd_request(args, None, author=author)
+
+    elif cmd == 'autoplay':
+        result = await bot.cmd_autoplay(args, author=author)
+
+    else:
+        return False
+    return result
+
+
+def validate_request(app, request):
+    app.config['bot'].logger.info(f"API Request for {request.path} from {request.remote_addr}")
+
+    if not request.content_type == 'application/json':
+        app.config['bot'].logger.info(
+            f"Bad Request from {request.remote_addr}: Content-type {request.content_type} is invalid")
+
+        return json.dumps({'error': 'Content-type must be application/json'}), 400, {
+            'ContentType': 'application/json'}
+
+    data = request.get_json(force=True)
+    data_ = data.copy()
+    data_.pop('authkey', None)
+    app.config['bot'].logger.info(f"API Request: {request.path} => {data_}")
+
+    if 'authkey' not in data or 'user_id' not in data:
+        app.config['bot'].logger.info(f"Bad Request from {request.remote_addr}: Missing some key attributes")
+        return json.dumps({'error': 'Missing key attributes'}), 400, {'ContentType': 'application/json'}
+
+    if app.config['bot'].BotConfig.web_api_auth_key != data['authkey']:
+        return json.dumps({'error': 'Invalid Auth Key'}), 401, {'ContentType': 'application/json'}
+
+    user = app.config['bot'].get_user(int(data['user_id']))
+    if not user:
+        return json.dumps({'error': 'User was not found'}), 404, {'ContentType': 'application/json'}
+
+    guild = app.config['bot'].get_guild(app.config['bot'].BotConfig.guild_id)
+    if not guild:
+        return json.dumps({'error': 'Server was not found'}), 404, {'ContentType': 'application/json'}
+    member = guild.get_member(user.id)
+    if not member:
+        return json.dumps({'error': 'User was not found on the server'}), 404, {'ContentType': 'application/json'}
+
+    return user, guild, member, data
+
+
+def start_logger():
+    logger = logging.getLogger('RathuMakara FM')
+    logger.setLevel(logging.DEBUG)
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler('MusicBot.log')
+    fh.setLevel(logging.DEBUG)
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter(
+        fmt='%(asctime)-10s - %(levelname)-5s: %(module)s:%(lineno)-d -  %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S')
+    ch.setFormatter(formatter)
+    fh.setFormatter(formatter)
+    # add the handlers to logger
+    logger.addHandler(ch)
+    logger.addHandler(fh)
+    return logger

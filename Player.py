@@ -9,7 +9,7 @@ from random import shuffle
 from utils import song_added_embed
 import os
 from mutagen.mp3 import MP3
-from bot_constants import playlist_queue_channel
+from BotConfig import playlist_queue_channel
 
 asession = AsyncHTMLSession()
 session = HTMLSession()
