@@ -55,3 +55,29 @@ def bot_command():
         app.config['bot'].logger.error("Error While Processing a API Request")
         app.config['bot'].logger.exception(e)
         return json.dumps({'error': 'Internal Server Error'}), 400, {'ContentType': 'application/json'}
+
+
+@app.route('/player_status/', methods=["GET"])
+def get_player_status():
+    try:
+        while True:
+            if os.stat("status.json").st_size != 0:
+                break
+
+        with open('status.json', "r") as f:
+            return jsonify(json.load(f))
+
+    except Exception as e:
+        app.logger.error("Reading status.json")
+        app.logger.exception(e)
+        return jsonify(
+            {
+                "now_playing": {"song": None, "uploader": None, "thumbnail": None, "url": None,
+                                "duration": None, "progress": None, "extractor": None, "requester": None,
+                                "is_pause": False},
+                'queue': [],
+                "is_pause": False,
+                "auto_play": False,
+                "volume": 100
+            }
+        )
