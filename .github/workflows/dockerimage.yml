@@ -1,0 +1,40 @@
+name: Docker Image CI/CD
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Install kubectl and doctl
+        run: |
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+          chmod +x ./kubectl
+          curl -sL https://github.com/digitalocean/doctl/releases/download/v1.28.0/doctl-1.28.0-linux-amd64.tar.gz | tar -xzv
+          chmod +x ./doctl
+          sudo mv ./kubectl /usr/local/bin/kubectl
+          sudo mv ./doctl /usr/local/bin/doctl
+      - name: Configure kubectl and doctl
+        run: |
+          doctl k8s cluster kubeconfig save ${{secrets.DIGITALOCEAN_CLUSTER}} -t ${{secrets.DIGITALOCEAN_TOKEN}}
+          doctl auth init -t ${{secrets.DIGITALOCEAN_TOKEN}}
+          echo ${{secrets.DOCKER_PASSWORD}} | docker login registry.iconicto.com -u ${{secrets.DOCKER_USERNAME}} --password-stdin
+      - name: Build Image
+        run: |
+          docker build -f Deployment/Production/Dockerfile -t $IMAGE_NAME .
+          docker tag ${IMAGE_NAME} ${IMAGE_NAME}:commit-${GITHUB_SHA}
+          docker tag ${IMAGE_NAME} ${IMAGE_NAME}:production
+        env:
+          IMAGE_NAME: registry.iconicto.com/rathumakara-discord-bot
+      - name: Push to Docker registry
+        run: docker push ${IMAGE_NAME}
+        env:
+          IMAGE_NAME: registry.iconicto.com/rathumakara-discord-bot
+      - name: Deploy to Cluster
+        run: kubectl set image deployment rathumakara-discord-bot-deployment rathumakara-discord-bot=${IMAGE_NAME}:commit-${GITHUB_SHA}
+        env:
+          IMAGE_NAME: registry.iconicto.com/rathumakara-discord-bot
