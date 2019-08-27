@@ -19,7 +19,6 @@ def user_info():
             'roles': [y.id for y in member.roles],
             'is_bot': user.bot,
             'dm_channel': user.dm_channel,
-            'created_at': user.created_at,
             'default_avatar_url': user.default_avatar_url,
             'is_blocked': user.is_blocked()
         }
