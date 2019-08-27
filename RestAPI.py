@@ -23,7 +23,7 @@ def user_info():
             'default_avatar_url': user.default_avatar_url,
             'is_blocked': user.is_blocked()
         }
-        return jsonify(d)
+        return json.dumps(d), 400, {'ContentType': 'application/json'}
 
     except Exception as e:
         app.config['bot'].logger.error("Error While Processing a API Request")
