@@ -16,8 +16,6 @@ class BotConfig:
         self.bot_commanders = self.get_env("bot_commanders", required=True, as_list=True)
         self.bot_auth_key = self.get_env("bot_auth_key", required=True)
         self.guild_id = self.get_env("guild_id", required=True)
-        self.discord_client_id = self.get_env("discord_client_id", required=True)
-        self.discord_client_secret = self.get_env("discord_client_secret", required=True)
         self.web_api_auth_key = self.get_env("web_api_auth_key", required=True)
 
     @staticmethod

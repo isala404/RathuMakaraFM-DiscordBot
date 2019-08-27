@@ -407,8 +407,7 @@ def validate_request(app, request):
         app.config['bot'].logger.info(
             f"Bad Request from {request.remote_addr}: Content-type {request.content_type} is invalid")
 
-        return json.dumps({'error': 'Content-type must be application/json'}), 400, {
-            'ContentType': 'application/json'}
+        return json.dumps({'error': 'Content-type must be application/json'}), 400, {'ContentType': 'application/json'}
 
     data = request.get_json(force=True)
     data_ = data.copy()

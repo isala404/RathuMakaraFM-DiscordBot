@@ -9,7 +9,7 @@ app = Flask(__name__)
 def user_info():
     try:
         response = validate_request(app, request)
-        if isinstance(response, str):
+        if len(response) == 3:
             return response
         else:
             user, guild, member, _ = response
@@ -35,7 +35,7 @@ def user_info():
 def bot_command():
     try:
         response = validate_request(app, request)
-        if isinstance(response, str):
+        if len(response) == 3:
             return response
         else:
             user, guild, member, data = response

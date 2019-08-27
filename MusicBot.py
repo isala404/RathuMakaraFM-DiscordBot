@@ -57,6 +57,7 @@ class MusicBot(discord.Client):
 
     async def auto_join(self):
         await self.wait_until_ready()
+        await asyncio.sleep(1)
         if self.voice_client and self.voice_client.is_connected():
             await self.voice_client.disconnect()
         self.voice_client = await self.get_voice_client(self.get_channel(self.BotConfig.bot_voice_channel))

@@ -19,8 +19,6 @@ services:
       bot_log_channel: ${bot_log_channel}
       bot_commanders: ${bot_commanders}
       bot_auth_key: ${bot_auth_key}
-      discord_client_id: ${discord_client_id}
-      discord_client_secret: ${discord_client_secret}
       web_api_auth_key: ${web_api_auth_key}
       web_api_ip: ${web_api_ip}
       guild_id: ${guild_id}
