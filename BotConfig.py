@@ -15,7 +15,7 @@ class BotConfig:
         self.bot_log_channel = self.get_env("bot_log_channel", required=True, as_int=True)
         self.bot_commanders = self.get_env("bot_commanders", required=True, as_list=True)
         self.bot_auth_key = self.get_env("bot_auth_key", required=True)
-        self.guild_id = self.get_env("guild_id", required=True)
+        self.guild_id = self.get_env("guild_id", required=True, as_int=True)
         self.web_api_auth_key = self.get_env("web_api_auth_key", required=True)
 
     @staticmethod
