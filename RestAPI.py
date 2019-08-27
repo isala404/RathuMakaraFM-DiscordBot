@@ -14,15 +14,7 @@ def user_info():
         else:
             user, guild, member, _ = response
 
-        d = {
-            'name': user.name,
-            'roles': [y.id for y in member.roles],
-            'is_bot': user.bot,
-            'dm_channel': user.dm_channel,
-            'default_avatar_url': user.default_avatar_url,
-            'is_blocked': user.is_blocked()
-        }
-        return json.dumps(d), 400, {'ContentType': 'application/json'}
+        return jsonify({'roles': [y.id for y in member.roles]}), 400, {'ContentType': 'application/json'}
 
     except Exception as e:
         app.config['bot'].logger.error("Error While Processing a API Request")
