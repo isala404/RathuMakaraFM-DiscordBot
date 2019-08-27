@@ -67,7 +67,7 @@ class MusicBot(discord.Client):
         if reaction.message.channel != self.MusicPlayer.song_request_queue_channel:
             return
 
-        if not [y.id for y in user.roles if int(y.id) in self.BotConfig.bot_commanders]:
+        if not [y.id for y in user.roles if str(y.id) in self.BotConfig.bot_commanders]:
             self.logger.info(f"{user.name} is not authorized to accept song requests")
             return
 

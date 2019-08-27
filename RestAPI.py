@@ -32,7 +32,7 @@ def bot_command():
             user, guild, member, data = response
 
         if data['cmd'] != "request" and not [y.id for y in member.roles if
-                                             y.id == app.config['bot'].BotConfig.bot_cmd_channel]:
+                                             str(y.id) in app.config['bot'].BotConfig.bot_commanders]:
             return json.dumps({'error': 'User Don\'t have permission for this action'}), 401, {
                 'ContentType': 'application/json'}
 
