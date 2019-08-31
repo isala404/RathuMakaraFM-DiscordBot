@@ -25,10 +25,15 @@ jobs:
           echo ${{secrets.DOCKER_PASSWORD}} | docker login docker.pkg.github.com -u ${{secrets.DOCKER_USERNAME}} --password-stdin
       - name: Build Image
         run: |
-          docker build -f Deployment/Production/Dockerfile -t (echo "docker.pkg.github.com/${GITHUB_REPOSITORY}" | awk '{print tolower($0)}') .
-          docker tag (echo "docker.pkg.github.com/${GITHUB_REPOSITORY}" | awk '{print tolower($0)}') (echo "docker.pkg.github.com/${GITHUB_REPOSITORY}" | awk '{print tolower($0)}'):commit-${GITHUB_SHA}
-          docker tag (echo "docker.pkg.github.com/${GITHUB_REPOSITORY}" | awk '{print tolower($0)}') (echo "docker.pkg.github.com/${GITHUB_REPOSITORY}" | awk '{print tolower($0)}'):production
+          export IMAGE_NAME=docker.pkg.github.com/${GITHUB_REPOSITORY}
+          export IMAGE_NAME=$(echo $IMAGE_NAME | awk '{print tolower($0)}')
+          docker build -f Deployment/Production/Dockerfile -t $IMAGE_NAME .
+          docker tag $IMAGE_NAME $IMAGE_NAME:commit-${GITHUB_SHA}
+          docker tag $IMAGE_NAME $IMAGE_NAME:production
       - name: Push to Docker registry
-        run: docker push (echo "docker.pkg.github.com/${GITHUB_REPOSITORY}" | awk '{print tolower($0)}')
+        run: docker push $IMAGE_NAME
       - name: Deploy to Cluster
-        run: kubectl set image deployment rathumakara-discord-bot-deployment rathumakara-discord-bot=(echo "docker.pkg.github.com/${GITHUB_REPOSITORY}" | awk '{print tolower($0)}'):commit-${GITHUB_SHA}
+        run: |
+          export IMAGE_NAME=docker.pkg.github.com/${GITHUB_REPOSITORY}
+          export IMAGE_NAME=$(echo $IMAGE_NAME | awk '{print tolower($0)}')
+          kubectl set image deployment rathumakara-discord-bot-deployment rathumakara-discord-bot=$IMAGE_NAME:commit-${GITHUB_SHA}
