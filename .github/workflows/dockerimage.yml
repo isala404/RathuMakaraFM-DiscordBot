@@ -29,12 +29,12 @@ jobs:
           docker tag $IMAGE_NAME $IMAGE_NAME:commit-${GITHUB_SHA}
           docker tag $IMAGE_NAME $IMAGE_NAME:production
         env:
-          IMAGE_NAME: docker.pkg.github.com/mrsupiri/rathumakara-discord-bot
+          IMAGE_NAME: docker.pkg.github.com/mrsupiri/rathumakarafm-discordbot/rathumakarafm-discordbot
       - name: Push to Docker registry
         run: docker push $IMAGE_NAME
         env:
-          IMAGE_NAME: docker.pkg.github.com/mrsupiri/rathumakara-discord-bot
+          IMAGE_NAME: docker.pkg.github.com/mrsupiri/rathumakarafm-discordbot/rathumakarafm-discordbot
       - name: Deploy to Cluster
         run: kubectl set image deployment rathumakara-discord-bot-deployment rathumakara-discord-bot=$IMAGE_NAME:commit-${GITHUB_SHA}
         env:
-          IMAGE_NAME: docker.pkg.github.com/mrsupiri/rathumakara-discord-bot
+          IMAGE_NAME: docker.pkg.github.com/mrsupiri/rathumakarafm-discordbot/rathumakarafm-discordbot
