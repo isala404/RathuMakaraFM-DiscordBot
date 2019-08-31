@@ -25,7 +25,7 @@ jobs:
           echo ${{secrets.DOCKER_PASSWORD}} | docker login docker.pkg.github.com -u ${{secrets.DOCKER_USERNAME}} --password-stdin
       - name: Build Image
         run: |
-          docker build -f Deployment/Production/Dockerfile -t $IMAGE_NAME .
+          docker build -f Deployment/Production/Dockerfile -t docker.pkg.github.com/${GITHUB_REPOSITORY} .
           docker tag docker.pkg.github.com/${GITHUB_REPOSITORY} docker.pkg.github.com/${GITHUB_REPOSITORY}:commit-${GITHUB_SHA}
           docker tag docker.pkg.github.com/${GITHUB_REPOSITORY} docker.pkg.github.com/${GITHUB_REPOSITORY}:production
       - name: Push to Docker registry
