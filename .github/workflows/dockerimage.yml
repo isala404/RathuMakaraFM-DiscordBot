@@ -35,6 +35,6 @@ jobs:
         env:
           IMAGE_NAME: docker.pkg.github.com/mrsupiri/rathumakarafm-discordbot/rathumakarafm-discordbot
       - name: Deploy to Cluster
-        run: kubectl set image deployment rathumakara-discord-bot-deployment rathumakara-discord-bot=$IMAGE_NAME:commit-${GITHUB_SHA}
+        run: kubectl set image deployment rathumakara-discord-bot-deployment rathumakarafm-discordbot=$IMAGE_NAME:commit-${GITHUB_SHA}
         env:
           IMAGE_NAME: docker.pkg.github.com/mrsupiri/rathumakarafm-discordbot/rathumakarafm-discordbot
