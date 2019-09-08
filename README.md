@@ -1,5 +1,6 @@
 [![codebeat badge](https://codebeat.co/badges/2feda3cc-114f-40a1-a9e2-b6dc26ce3fd2)](https://codebeat.co/projects/github-com-mrsupiri-rathumakarafm-discordbot-master)
 ![GitHub issues](https://img.shields.io/github/issues/mrsupiri/RathuMakaraFM-DiscordBot)
+[![GitHub Action](https://github.com/mrsupiri/RathuMakaraFM-DiscordBot/workflows/Docker%20CI/CD%20Pipeline/badge.svg)](https://github.com/mrsupiri/RathuMakaraFM-DiscordBot/actions)
 [![Requirements Status](https://requires.io/github/mrsupiri/RathuMakaraFM-DiscordBot/requirements.svg?branch=master)](https://requires.io/github/mrsupiri/RathuMakaraFM-DiscordBot/requirements/?branch=master)
 ![GitHub license](https://img.shields.io/github/license/mrsupiri/RathuMakaraFM-DiscordBot)
 ![Platform](https://img.shields.io/badge/platform-Kubernetes/Docker/Linux-blue)
