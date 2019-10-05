@@ -3,7 +3,7 @@ import os
 
 class BotConfig:
     def __init__(self):
-        self.prefix = self.get_env("prefix", required=True)
+        self.prefix = self.get_env("prefix", required=)
         self.bot_voice_channel = self.get_env("bot_voice_channel", required=True, as_int=True)
         self.player_channel = self.get_env("player_channel", required=True, as_int=True)
         self.bot_cmd_channel = self.get_env("bot_cmd_channel", required=True, as_int=True)
@@ -22,7 +22,7 @@ class BotConfig:
     def get_env(name, required=False, as_int=False, as_list=False):
         var = os.getenv(name).strip()
         if required and not var:
-            raise RuntimeError(f"{name} environment variables is not defined")
+            raise RuntimeError(f"{name} environmental changes is not defined")
         if as_int:
             return int(var)
         if as_list:
